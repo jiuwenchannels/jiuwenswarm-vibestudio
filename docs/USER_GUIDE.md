@@ -57,17 +57,18 @@ Your preference is remembered between sessions.
 When you open a project you enter the Studio.
 
 ```
-┌──────────────────────────────────────────────────────────────┐
-│  ← Dashboard  |  Project name               ↩ Undo  ↓ ZIP  │
-│                                             </> Code  ☾ Dark │
-├──────────────────────┬───────────────────────────────────────┤
-│                      │                                       │
-│   Chat panel         │   Live preview                        │
-│   (send prompts,     │   (your app running live)             │
-│   see responses)     │                                       │
-│                      │                                       │
-└──────────────────────┴───────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────┐
+│  ← Dashboard  |  Project name     ↩ Undo  ↓ ZIP  ↓ Chat  ⚡ Swarm  </> │
+├──────────────────────┬────────────────────────────┬──────────────────────┤
+│                      │                            │                      │
+│   Chat panel         │   Live preview             │   Swarm panel        │
+│   (send prompts,     │   (your app running live)  │   (agent activity,   │
+│   see responses)     │                            │   optional)          │
+│                      │                            │                      │
+└──────────────────────┴────────────────────────────┴──────────────────────┘
 ```
+
+The Swarm panel is hidden by default. Toggle it with **⚡ Swarm**.
 
 ### Chat panel
 
@@ -174,6 +175,110 @@ Your projects are stored in your browser's `localStorage`. This means:
   you do not need to regenerate.
 - Clearing browser storage will remove all projects. Download a ZIP first if
   you want to keep the code.
+
+---
+
+## Templates
+
+The Dashboard has a **Use template** button next to the **Create** button.
+Click it to open the template picker — a modal with six ready-made starter
+projects:
+
+| Template | What it builds |
+|---|---|
+| To-do App | Task list with priorities, tags, and dark mode |
+| Landing Page | SaaS-style hero, pricing, FAQ, and email form |
+| Finance Dashboard | Income/expense tracker with charts |
+| Recipe Book | Searchable recipes, favourites, and shopping list |
+| Kanban Board | Drag-and-drop columns stored in localStorage |
+| Chat UI | Polished messaging layout with timestamps |
+
+Selecting a template creates a new project and immediately sends the full
+generation prompt when you enter the Studio — no typing required.
+
+---
+
+## Quick-Action Buttons
+
+The chat panel shows four pill buttons below the input:
+
+| Button | Effect |
+|---|---|
+| **Generate** | Removes any existing prefix — plain generation |
+| **Fix** | Prepends `Fix: ` to your message |
+| **Explain** | Prepends `Explain: ` to your message |
+| **Refactor** | Prepends `Refactor: ` to your message |
+
+The prefix is stripped and replaced when you switch between actions, so you
+never end up with double prefixes. You can always type the prefix manually
+instead — the intent detection works the same way.
+
+---
+
+## Swarm Activity Panel
+
+Click **⚡ Swarm** in the Studio toolbar to open a side panel showing
+real-time agent activity:
+
+- Each line shows the agent's status message and a wall-clock timestamp.
+- An animated spinner at the bottom shows the current active agent name.
+- Click **Clear** to empty the log.
+
+The panel is purely informational — it does not affect generation. Closing
+it with **⚡ Swarm** again hides the panel without clearing the log.
+
+On mobile, enabling the Swarm panel adds a **Swarm** tab to the bottom tab bar.
+
+---
+
+## Exporting the Chat
+
+Once you have exchanged at least one non-status message, a **↓ Chat** button
+appears in the Studio toolbar. Clicking it downloads a Markdown file
+(`<project-name>-chat.md`) containing the full conversation, suitable for
+sharing or archiving.
+
+The file uses simple formatting:
+
+```
+# Project name
+_Exported: <timestamp>_
+
+**You:** your message…
+
+**Agent:** agent response…
+
+> _Agent status: Planning…_
+```
+
+---
+
+## Using VibeStudio on Mobile
+
+VibeStudio adapts to small screens automatically. On screens narrower than
+768 px, the side-by-side layout is replaced by a tab bar at the top of the
+workspace:
+
+| Tab | Content |
+|---|---|
+| **Chat** | Full-screen chat panel |
+| **Preview** | Full-screen live preview |
+| **Swarm** | Agent activity log (visible only when Swarm is enabled) |
+
+All toolbar buttons remain accessible at the top of the screen.
+
+---
+
+## Reconnection
+
+If the connection to JiuwenSwarm drops (e.g. the server is restarted), a
+banner appears at the bottom of the screen:
+
+> 🔴 Disconnected from JiuwenSwarm — reconnecting…
+
+The client retries automatically with exponential back-off. The banner
+disappears as soon as the connection is restored and any in-flight generation
+resumes.
 
 ---
 

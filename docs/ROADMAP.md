@@ -3,21 +3,13 @@
 Each stage is intentionally small-to-medium. Stages within a phase may be
 worked in parallel where dependencies allow.
 
-**Current version: v0.2** — Phase 1 complete. Phase 2 next.
+**Current version: v0.3** — Phase 1 complete. Phase 2 core UX complete
+(2.1 templates, 2.2 quick-actions, 2.5 swarm panel, 2.10 mobile layout,
+2.11 chat export, 2.12 reconnect toast). Remaining Phase 2 stages below.
 
 ---
 
-## Phase 2 — Richer editing and deployment
-
-Stage 2.1 — Template picker on Dashboard
-: "Choose a template" modal with 6 starter templates (landing page, SaaS
-  dashboard, API-only, blog, portfolio, e-commerce). Each template pre-fills
-  the first generation prompt.
-
-Stage 2.2 — Quick-action buttons in Chat
-: Pill buttons below the input: **Generate**, **Fix**, **Explain**,
-  **Refactor** — pre-sets the intent without typing, reducing friction for
-  non-technical users.
+## Phase 2 — Richer editing and deployment (remaining)
 
 Stage 2.3 — Monaco editor panel (read-only)
 : Lazy-load `@monaco-editor/react`; replace Sandpack's built-in code view with
@@ -27,11 +19,6 @@ Stage 2.3 — Monaco editor panel (read-only)
 Stage 2.4 — Monaco editor (editable, sync to store)
 : Allow manual edits in Monaco; debounce updates to the project store;
   re-render Sandpack preview on change. File-level dirty indicator.
-
-Stage 2.5 — Swarm panel (agent activity sidebar)
-: Collapsible right panel showing per-agent status from `status` stream
-  events; real-time token counter from `metrics` push; collapsible
-  agent-task tree.
 
 Stage 2.6 — WebContainers preview (Next.js / server-side support)
 : Integrate `@stackblitz/sdk` WebContainers for projects that contain an
@@ -51,20 +38,6 @@ Stage 2.8 — Deployment to Vercel
 Stage 2.9 — Deployment to Netlify
 : Netlify API equivalent of Stage 2.8; drops build into the Netlify CDN
   directly from the browser ZIP export.
-
-Stage 2.10 — Mobile-responsive layout
-: Collapsible Chat and Preview panels behind tab toggles on narrow screens
-  (< 768 px); bottom-sheet prompt input; touch-friendly file tree.
-
-Stage 2.11 — Session export (conversation as Markdown)
-: "Export chat" button in the Studio toolbar; calls
-  `client.exportSession(sessionId, "markdown")`; downloads a `.md` file
-  containing the full conversation and the final file listing.
-
-Stage 2.12 — Reconnect toast notification
-: Visible toast banner when the WebSocket drops; shows retry count and
-  elapsed time; "Reconnect now" manual trigger button; dismisses
-  automatically on reconnect.
 
 ---
 

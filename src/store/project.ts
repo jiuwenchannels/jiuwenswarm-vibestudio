@@ -7,6 +7,32 @@
 import { create } from "zustand";
 import type { FileDelta } from "../lib/streamParser";
 
+// ---------------------------------------------------------------------------
+// Chat message types (shared with ChatPanel and MessageBubble)
+// ---------------------------------------------------------------------------
+
+export type MessageRole = "user" | "assistant" | "status";
+
+export interface ChatMessage {
+  id: string;
+  role: MessageRole;
+  content: string;
+  isStreaming?: boolean;
+}
+
+// ---------------------------------------------------------------------------
+// Agent log entry (used by the Swarm panel)
+// ---------------------------------------------------------------------------
+
+export interface AgentLogEntry {
+  status: string;
+  time: number; // Date.now()
+}
+
+// ---------------------------------------------------------------------------
+// Generation / rewind types
+// ---------------------------------------------------------------------------
+
 export interface GenerationState {
   isGenerating: boolean;
   activeAgent: string | null;
@@ -14,44 +40,69 @@ export interface GenerationState {
 }
 
 export interface RewindEntry {
-  /** JiuwenSwarm message ID that marks this rewind point. */
   msgId: string;
-  /** Snapshot of the file map BEFORE this generation ran. */
   snapshot: Record<string, string>;
 }
 
+// ---------------------------------------------------------------------------
+// Store interface
+// ---------------------------------------------------------------------------
+
 interface ProjectState {
+  // Files
   files: Record<string, string>;
   activeFile: string | null;
+
+  // Chat history (owned here so Studio can export it)
+  messages: ChatMessage[];
+
+  // Generation progress
   generation: GenerationState;
-  /** Ordered list of rewind entries (most recent last). */
+
+  // Swarm activity log
+  agentLog: AgentLogEntry[];
+
+  // Rewind stack
   rewindStack: RewindEntry[];
-  /** Pre-generation file snapshot captured just before a submit. */
   _pendingSnapshot: Record<string, string> | null;
 
-  // File actions
+  // Optional prompt injected by the template picker; cleared after first send
+  initialPrompt: string | null;
+
+  // --- File actions ---
   applyDeltas: (deltas: FileDelta[]) => void;
   setActiveFile: (path: string | null) => void;
-  /** Load a full file map (e.g. restored from persisted session). */
   loadFiles: (files: Record<string, string>) => void;
 
-  // Generation state
+  // --- Chat actions ---
+  addChatMessage: (msg: ChatMessage) => void;
+  updateLastAssistantMessage: (updater: (m: ChatMessage) => ChatMessage) => void;
+  clearChatMessages: () => void;
+
+  // --- Generation state ---
   setGenerating: (generating: boolean, agent?: string) => void;
   appendToken: (token: string) => void;
   clearStreamBuffer: () => void;
 
-  // Rewind
-  /** Snapshot current files as the pre-generation baseline. Call before each submit. */
+  // --- Swarm log ---
+  appendAgentStatus: (status: string) => void;
+  clearAgentLog: () => void;
+
+  // --- Rewind ---
   snapshotForRewind: () => void;
-  /** Associate the pending snapshot with a server-assigned message ID. */
   pushRewindable: (messageId: string) => void;
-  /** Pop the latest entry, return its snapshot (or null if stack is empty). */
   popRewindSnapshot: () => Record<string, string> | null;
-  /** Replace current files with a previously saved snapshot. */
   restoreSnapshot: (snapshot: Record<string, string>) => void;
+
+  // --- Template ---
+  setInitialPrompt: (prompt: string | null) => void;
 
   resetProject: () => void;
 }
+
+// ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
 
 const INITIAL_GENERATION: GenerationState = {
   isGenerating: false,
@@ -59,12 +110,21 @@ const INITIAL_GENERATION: GenerationState = {
   streamBuffer: "",
 };
 
+// ---------------------------------------------------------------------------
+// Store
+// ---------------------------------------------------------------------------
+
 export const useProjectStore = create<ProjectState>()((set, get) => ({
   files: {},
   activeFile: null,
+  messages: [],
   generation: INITIAL_GENERATION,
+  agentLog: [],
   rewindStack: [],
   _pendingSnapshot: null,
+  initialPrompt: null,
+
+  // --- Files ---
 
   applyDeltas: (deltas) =>
     set((s) => {
@@ -77,10 +137,7 @@ export const useProjectStore = create<ProjectState>()((set, get) => ({
         }
       }
       const firstFile = deltas.find((d) => d.action !== "delete")?.path ?? null;
-      return {
-        files: next,
-        activeFile: s.activeFile ?? firstFile,
-      };
+      return { files: next, activeFile: s.activeFile ?? firstFile };
     }),
 
   setActiveFile: (path) => set({ activeFile: path }),
@@ -91,6 +148,25 @@ export const useProjectStore = create<ProjectState>()((set, get) => ({
       activeFile: s.activeFile ?? Object.keys(files)[0] ?? null,
     })),
 
+  // --- Chat ---
+
+  addChatMessage: (msg) =>
+    set((s) => ({ messages: [...s.messages, msg] })),
+
+  updateLastAssistantMessage: (updater) =>
+    set((s) => {
+      const idx = [...s.messages].reverse().findIndex((m) => m.role === "assistant");
+      if (idx === -1) return s;
+      const realIdx = s.messages.length - 1 - idx;
+      const next = [...s.messages];
+      next[realIdx] = updater(next[realIdx]);
+      return { messages: next };
+    }),
+
+  clearChatMessages: () => set({ messages: [] }),
+
+  // --- Generation state ---
+
   setGenerating: (isGenerating, agent?: string) =>
     set((s) => ({
       generation: { ...s.generation, isGenerating, activeAgent: agent ?? null },
@@ -98,14 +174,26 @@ export const useProjectStore = create<ProjectState>()((set, get) => ({
 
   appendToken: (token) =>
     set((s) => ({
-      generation: {
-        ...s.generation,
-        streamBuffer: s.generation.streamBuffer + token,
-      },
+      generation: { ...s.generation, streamBuffer: s.generation.streamBuffer + token },
     })),
 
   clearStreamBuffer: () =>
     set((s) => ({ generation: { ...s.generation, streamBuffer: "" } })),
+
+  // --- Swarm log ---
+
+  appendAgentStatus: (status) =>
+    set((s) => ({
+      agentLog: [...s.agentLog, { status, time: Date.now() }],
+      // Keep log bounded at 200 entries
+      ...(s.agentLog.length >= 200
+        ? { agentLog: [...s.agentLog.slice(-199), { status, time: Date.now() }] }
+        : {}),
+    })),
+
+  clearAgentLog: () => set({ agentLog: [] }),
+
+  // --- Rewind ---
 
   snapshotForRewind: () =>
     set((s) => ({ _pendingSnapshot: { ...s.files } })),
@@ -128,17 +216,23 @@ export const useProjectStore = create<ProjectState>()((set, get) => ({
   },
 
   restoreSnapshot: (snapshot) =>
-    set({
-      files: snapshot,
-      activeFile: Object.keys(snapshot)[0] ?? null,
-    }),
+    set({ files: snapshot, activeFile: Object.keys(snapshot)[0] ?? null }),
+
+  // --- Template ---
+
+  setInitialPrompt: (prompt) => set({ initialPrompt: prompt }),
+
+  // --- Reset ---
 
   resetProject: () =>
     set({
       files: {},
       activeFile: null,
+      messages: [],
       generation: INITIAL_GENERATION,
+      agentLog: [],
       rewindStack: [],
       _pendingSnapshot: null,
+      initialPrompt: null,
     }),
 }));

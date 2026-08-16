@@ -1,20 +1,12 @@
 /**
  * MessageBubble — renders a single chat message.
- *
- * User messages are right-aligned.  Assistant messages (including streaming
- * in-progress ones) are left-aligned with a blinking cursor at the end.
+ * ChatMessage type is owned by the project store so other components
+ * (export, swarm panel) can access the conversation history.
  */
 import type { ReactNode } from "react";
+import type { ChatMessage } from "../../store/project";
 
-export type MessageRole = "user" | "assistant" | "status";
-
-export interface ChatMessage {
-  id: string;
-  role: MessageRole;
-  content: string;
-  /** True while the assistant is still streaming this message. */
-  isStreaming?: boolean;
-}
+export type { ChatMessage };
 
 interface Props {
   message: ChatMessage;

@@ -42,26 +42,30 @@ jiuwenswarm-vibestudio/
 │   │   ├── client.ts              # SDK singleton (getClient / connectClient)
 │   │   ├── agentMode.ts           # Intent → agent mode selection
 │   │   ├── streamParser.ts        # @@FILE: / @@DELETE: extraction
-│   │   └── export.ts              # ZIP download (fflate)
+│   │   └── export.ts              # ZIP download + chat Markdown export (fflate)
 │   │
 │   ├── store/
-│   │   ├── project.ts             # In-memory project state (files, rewind)
+│   │   ├── project.ts             # In-memory project state (files, messages, rewind)
 │   │   ├── session.ts             # Persisted session list + file snapshots
 │   │   └── theme.ts               # Dark/light preference (persisted)
 │   │
 │   ├── components/
 │   │   ├── Chat/
-│   │   │   ├── ChatPanel.tsx      # Prompt input + streaming message list
+│   │   │   ├── ChatPanel.tsx      # Prompt input + streaming message list + quick-actions
 │   │   │   └── MessageBubble.tsx  # User / assistant / status bubbles
 │   │   ├── Preview/
 │   │   │   └── SandpackPreview.tsx # Live preview (+ optional code editor)
 │   │   ├── FileExplorer/
 │   │   │   └── FileTree.tsx       # Nested file tree (toggleable)
+│   │   ├── Swarm/
+│   │   │   └── SwarmPanel.tsx     # Live agent activity log sidebar
+│   │   ├── TemplateModal.tsx      # Template picker overlay (6 starters)
+│   │   ├── ReconnectToast.tsx     # Floating disconnection banner
 │   │   └── ErrorBoundary.tsx      # Render-error recovery screen
 │   │
 │   └── pages/
-│       ├── Dashboard.tsx          # Project list, create, rename, delete
-│       └── Studio.tsx             # Main workspace (chat + preview)
+│       ├── Dashboard.tsx          # Project list, create, rename, delete, templates
+│       └── Studio.tsx             # Main workspace (chat + preview + swarm)
 │
 ├── tests/                         # Vitest unit tests
 ├── docs/                          # This documentation
@@ -289,7 +293,7 @@ without needing to re-generate.
 
 ## ZIP Export
 
-`lib/export.ts` — `downloadProjectZip(files, name)`:
+`lib/export.ts` — `downloadProjectZip(files, name)` and `exportChatMarkdown(messages, name)`:
 
 1. Converts each file string to `Uint8Array` via `fflate.strToU8`.
 2. Calls `fflate.zip()` (async, Web Worker-compatible).
@@ -298,3 +302,75 @@ without needing to re-generate.
 4. Revokes the object URL immediately after.
 
 No server is involved. The ZIP is generated entirely in the browser.
+
+---
+
+## Chat Export (Markdown)
+
+`lib/export.ts` — `exportChatMarkdown(messages, name)`:
+
+1. Iterates over `ChatMessage[]` from the project store.
+2. Renders user messages as `**You:** …`, assistant messages as `**Agent:** …`,
+   and status messages as `> _…_` blockquotes.
+3. Creates a `Blob` with `text/markdown` MIME type and triggers a browser
+   download of `<sanitized-name>-chat.md`.
+
+---
+
+## Template Picker
+
+`components/TemplateModal.tsx` — modal overlay shown from the Dashboard.
+
+6 built-in templates (To-do App, Landing Page, Finance Dashboard, Recipe Book,
+Kanban Board, Chat UI). Each template carries:
+- `title` — used as the session name.
+- `prompt` — a detailed generation prompt.
+
+On selection:
+1. Creates a new JiuwenSwarm session with `client.sessions.create(title)`.
+2. Calls `setInitialPrompt(prompt)` on the project store.
+3. Navigates to `/studio/<sessionId>`.
+4. `ChatPanel` auto-sends the prompt as the first message once connected.
+
+---
+
+## Swarm Activity Panel
+
+`components/Swarm/SwarmPanel.tsx` — collapsible panel rendered to the right of
+the Sandpack preview in Studio.
+
+- Reads `agentLog: AgentLogEntry[]` from the project store.
+- `agentLog` is populated by `appendAgentStatus(status)`, called from
+  `ChatPanel` on every `"status"` stream event.
+- Entries include a wall-clock timestamp and the status string.
+- Auto-scrolls to the latest entry; bounded at 200 entries.
+- Shows a spinner footer badge for `generation.activeAgent`.
+- "Clear" button calls `clearAgentLog()`.
+- Toggled by the `⚡ Swarm` button in the Studio toolbar.
+
+---
+
+## Reconnect Toast
+
+`components/ReconnectToast.tsx` — fixed overlay banner that appears when the
+WebSocket connection is lost and auto-dismisses when the connection is restored.
+
+Subscribes to `"connected"` / `"disconnected"` events on the `RpcClient`
+singleton. Rendered inside `StudioInner` so it is always mounted during a
+workspace session.
+
+---
+
+## Mobile Layout
+
+On screens narrower than the Tailwind `md` breakpoint (768 px), Studio hides
+the side-by-side flex layout and shows a tab bar instead:
+
+| Tab | Content |
+|---|---|
+| Chat | Full-height `ChatPanel` |
+| Preview | Full-height `SandpackPreview` |
+| Swarm | `SwarmPanel` (only when Swarm toggle is active) |
+
+The desktop layout (hidden on mobile via `hidden md:flex`) continues to use
+the side-by-side column layout with optional FileTree / SwarmPanel columns.

@@ -46,6 +46,55 @@ export function downloadProjectZip(
   });
 }
 
+/**
+ * Export the chat conversation as a Markdown file and trigger a browser download.
+ *
+ * Format:
+ *   # Project name
+ *   Exported: <ISO timestamp>
+ *
+ *   **You:** message…
+ *
+ *   **Agent:** message…
+ *
+ * Status messages (role === "status") are rendered as italicised blockquotes.
+ *
+ * @param messages  Array of ChatMessage from the project store.
+ * @param name      Project name — used as the document title and filename.
+ */
+export function exportChatMarkdown(
+  messages: { role: string; content: string }[],
+  name: string,
+): void {
+  if (messages.length === 0) return;
+
+  const lines: string[] = [
+    `# ${name}`,
+    `_Exported: ${new Date().toISOString()}_`,
+    "",
+  ];
+
+  for (const msg of messages) {
+    if (msg.role === "user") {
+      lines.push(`**You:** ${msg.content}`, "");
+    } else if (msg.role === "assistant") {
+      lines.push(`**Agent:** ${msg.content}`, "");
+    } else if (msg.role === "status") {
+      lines.push(`> _${msg.content}_`, "");
+    }
+  }
+
+  const blob = new Blob([lines.join("\n")], { type: "text/markdown;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${sanitizeFilename(name)}-chat.md`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 function sanitizeFilename(name: string): string {
   return name.trim().replace(/[^\w\s-]/g, "").replace(/\s+/g, "-") || "project";
 }

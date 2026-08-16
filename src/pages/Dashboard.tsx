@@ -12,6 +12,7 @@ import { getClient, connectClient } from "../lib/client";
 import { useSessionStore } from "../store/session";
 import { useProjectStore } from "../store/project";
 import { useThemeStore } from "../store/theme";
+import { TemplateModal } from "../components/TemplateModal";
 
 const STARTER_PROMPTS = [
   "Build a modern to-do app with drag-and-drop, tags, and dark mode",
@@ -29,6 +30,7 @@ export function Dashboard(): React.ReactNode {
   const [title, setTitle] = useState("");
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showTemplates, setShowTemplates] = useState(false);
 
   // Inline rename state
   const [renamingId, setRenamingId] = useState<string | null>(null);
@@ -109,6 +111,7 @@ export function Dashboard(): React.ReactNode {
 
   return (
     <div className="min-h-screen bg-vs-bg text-vs-text flex flex-col">
+      {showTemplates && <TemplateModal onClose={() => setShowTemplates(false)} />}
       {/* Header */}
       <header className="border-b border-vs-border px-8 py-5 flex items-center justify-between">
         <div>
@@ -141,6 +144,15 @@ export function Dashboard(): React.ReactNode {
               className="flex-1 rounded-xl bg-vs-raised border border-vs-border px-4 py-3
                          text-sm placeholder-vs-muted focus:outline-none focus:border-brand-500"
             />
+            <button
+              type="button"
+              onClick={() => setShowTemplates(true)}
+              className="px-4 py-3 rounded-xl border border-vs-border bg-vs-raised
+                         text-sm text-vs-muted hover:text-vs-text hover:bg-vs-border
+                         transition-colors whitespace-nowrap"
+            >
+              Use template
+            </button>
             <button
               type="submit"
               disabled={creating}
