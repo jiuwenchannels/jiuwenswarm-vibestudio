@@ -18,9 +18,12 @@ The agent side runs on the server:
 - **QA** agent reviews every output before it reaches the user
 
 The browser side renders:
-- A **chat panel** with live streaming token output
+- A **chat panel** with live streaming token output and quick-action buttons
 - A **Sandpack preview** — the generated app running live in the browser
-- A **file tree** of all generated files
+- A **file tree** and optional code editor
+- A **Swarm panel** showing real-time per-agent activity
+- A **template picker** with 6 ready-made starters
+- A **reconnect toast** that auto-dismisses when the WebSocket recovers
 
 ---
 
@@ -52,20 +55,18 @@ troubleshooting see **[`docs/INSTALLATION.md`](docs/INSTALLATION.md)**.
 ```
 Browser (VibeStudio SPA)
 ├── @jiuwenswarm/sdk         ← sole transport layer to JiuwenSwarm
-│   └── JiuwenSwarmClient   ← WebSocket, sessions, streamEvents, rewind
-├── Zustand stores           ← project files, generation state, session list
-├── Sandpack                 ← in-browser React/TS preview
-└── React Router             ← /dashboard  and  /studio/:sessionId
+│   └── RpcClient            ← WebSocket, sessions, streamEvents, rewind
+├── Zustand stores           ← project files, chat messages, agent log, session list
+├── Sandpack                 ← in-browser React/TS preview + optional code editor
+└── React Router             ← /  (Dashboard)  and  /studio/:sessionId
 
 JiuwenSwarm server
 └── agent team (Architect + Frontend + Backend + Database + QA)
     └── openjiuwen.core runtime (memory, retrieval, tool execution)
 ```
 
-The session IS the project.  Files, conversation history, and project state are
-all stored in the JiuwenSwarm session.  Closing the browser and returning later
-will continue exactly where you left off (once session restore is implemented —
-see Roadmap Stage 1.13).
+The session IS the project.  Generated files are persisted to `localStorage` so
+closing and re-opening a project restores the last state without re-generating.
 
 ---
 
@@ -74,42 +75,62 @@ see Roadmap Stage 1.13).
 ```
 jiuwenswarm-vibestudio/
 ├── src/
-│   ├── config.ts                  # Env var access
-│   ├── main.tsx                   # React root
-│   ├── App.tsx                    # Router
-│   ├── index.css                  # Tailwind imports
+│   ├── config.ts                       # Env var access
+│   ├── main.tsx                        # React root
+│   ├── App.tsx                         # Router
+│   ├── index.css                       # Tailwind + CSS variable themes (light/dark)
+│   │
 │   ├── lib/
-│   │   ├── client.ts              # Singleton JiuwenSwarmClient
-│   │   ├── streamParser.ts        # @@FILE…@@END_FILE extraction
-│   │   └── agentMode.ts           # Mode selection (team/agent) + intent detection
+│   │   ├── client.ts                   # RpcClient — WebSocket, sessions, streamEvents, rewind
+│   │   ├── streamParser.ts             # @@FILE…@@END_FILE extraction
+│   │   ├── agentMode.ts                # Mode selection (team/agent) + intent detection
+│   │   └── export.ts                   # ZIP export + Markdown chat export (fflate)
+│   │
 │   ├── store/
-│   │   ├── project.ts             # Files, generation state, rewind stack
-│   │   └── session.ts             # Project list (persisted to localStorage)
+│   │   ├── project.ts                  # Files, chat messages, agent log, rewind stack
+│   │   ├── session.ts                  # Project list + file snapshots (localStorage)
+│   │   └── theme.ts                    # Dark/light preference (localStorage)
+│   │
 │   ├── components/
 │   │   ├── Chat/
-│   │   │   ├── ChatPanel.tsx      # Full streaming chat interface
-│   │   │   └── MessageBubble.tsx  # Message rendering
+│   │   │   ├── ChatPanel.tsx           # Prompt input + streaming messages + quick-actions
+│   │   │   └── MessageBubble.tsx       # User / assistant / status bubbles
 │   │   ├── Preview/
-│   │   │   └── SandpackPreview.tsx # Live in-browser preview
-│   │   └── FileExplorer/
-│   │       └── FileTree.tsx       # Generated file tree
+│   │   │   └── SandpackPreview.tsx     # Live preview (+ optional Sandpack code editor)
+│   │   ├── FileExplorer/
+│   │   │   └── FileTree.tsx            # Nested file tree (toggleable)
+│   │   ├── Swarm/
+│   │   │   └── SwarmPanel.tsx          # Real-time agent activity log sidebar
+│   │   ├── TemplateModal.tsx           # Template picker overlay (6 starters)
+│   │   ├── ReconnectToast.tsx          # Floating disconnection banner
+│   │   └── ErrorBoundary.tsx           # Render-error recovery screen
+│   │
 │   └── pages/
-│       ├── Dashboard.tsx          # Project list + creation
-│       └── Studio.tsx             # Main workspace
+│       ├── Dashboard.tsx               # Project list, create, rename, delete, templates
+│       └── Studio.tsx                  # Main workspace (chat + preview + swarm, mobile tabs)
+│
 ├── tests/
-│   ├── setup.ts
-│   ├── streamParser.test.ts
-│   └── agentMode.test.ts
+│   ├── setup.ts                        # Vitest + jest-dom bootstrap
+│   ├── streamParser.test.ts            # @@FILE extraction, @@DELETE, whitespace
+│   ├── agentMode.test.ts               # Intent detection, mode selection, stream options
+│   ├── projectStore.test.ts            # Chat messages, agent log, rewind, reset
+│   ├── export.test.ts                  # Markdown export, filename sanitisation, download trigger
+│   └── session.test.ts                 # Session CRUD, file persistence, active project
+│
 ├── docs/
-│   ├── ROADMAP.md
-│   └── rat_sig/
-│       ├── RAT.md                 # Requirements analysis (reference)
-│       └── SIG.md                 # System investigation (reference)
+│   ├── INSTALLATION.md                 # Full setup guide
+│   ├── ARCHITECTURE.md                 # System design, state management, protocols
+│   ├── USER_GUIDE.md                   # End-user guide (templates, panels, mobile, export)
+│   └── ROADMAP.md                      # Remaining Phase 2 + Phase 3 stages
+│
 └── examples/
     └── prompts/
-        ├── todo-app.md
-        ├── landing-page.md
-        └── dashboard.md
+        ├── todo-app.md                 # To-do app with priorities, tags, dark mode
+        ├── landing-page.md             # SaaS landing page
+        ├── dashboard.md                # Analytics dashboard with charts
+        ├── kanban-board.md             # Drag-and-drop Kanban board
+        ├── chat-ui.md                  # Polished chat interface
+        └── auth-form.md                # Login / sign-up form with validation
 ```
 
 ---
@@ -146,31 +167,32 @@ follow this convention.
 | `fix` | `"agent"` | Bug fix or error correction |
 
 `inferIntent()` applies a simple heuristic to the user's message text.
-Users can also override the intent with quick-action buttons (Phase 2).
+Users can also override with quick-action buttons (**Generate / Fix / Explain / Refactor**).
 
 ---
 
 ## Development
 
 ```bash
-npm run dev       # Start Vite dev server on :5174
-npm test          # Run Vitest unit tests
-npm run typecheck # TypeScript check (src/ only)
-npm run build     # Production build to dist/
+npm run dev        # Start Vite dev server on :5174
+npm test           # Run Vitest unit tests (42 tests across 5 suites)
+npm run coverage   # Run tests with V8 coverage report
+npm run typecheck  # TypeScript check (no emit)
+npm run build      # Production build to dist/
 ```
 
 ---
 
 ## Roadmap
 
-Full roadmap with 30 small-to-medium stages across three phases:
-[`docs/ROADMAP.md`](docs/ROADMAP.md)
+Full roadmap: [`docs/ROADMAP.md`](docs/ROADMAP.md)
 
-**Phase 1** (current) — core generation loop: chat, streaming, Sandpack preview,
+**Phase 1** (complete) — core generation loop: chat, streaming, Sandpack preview,
 file tree, dashboard, ZIP export, session restore, rewind, CI.
 
-**Phase 2** — full-stack apps: templates, Monaco editor, swarm panel,
-WebContainers, deployment (Vercel/Netlify), asset uploader, mobile layout.
+**Phase 2** (in progress) — richer editing and deployment:
+- Done: templates, quick-actions, swarm panel, mobile layout, chat export, reconnect toast
+- Remaining: Monaco editor (read-only + editable), WebContainers, Vercel/Netlify deploy, asset uploader
 
 **Phase 3** — collaboration and extensibility: real-time shared editing,
 VibeStudio server, plugin marketplace, project forking.
