@@ -173,7 +173,12 @@ function StudioInner(): React.ReactNode {
 
           {/* Swarm panel toggle */}
           <button
-            onClick={() => setShowSwarm((v) => !v)}
+            onClick={() => {
+              // If closing Swarm while the mobile "swarm" tab is active,
+              // fall back to "chat" so the user isn't left on a blank tab.
+              if (showSwarm && mobileTab === "swarm") setMobileTab("chat");
+              setShowSwarm((v) => !v);
+            }}
             className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs
                         transition-colors border
                         ${showSwarm
