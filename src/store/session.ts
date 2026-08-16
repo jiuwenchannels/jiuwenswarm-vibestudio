@@ -6,7 +6,7 @@
  */
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { SessionInfo } from "@jiuwenswarm/sdk";
+import type { SessionInfo } from "../lib/client";
 
 export interface ProjectMeta {
   /** JiuwenSwarm session ID. */

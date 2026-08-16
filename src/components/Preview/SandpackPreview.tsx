@@ -67,9 +67,7 @@ export function SandpackPreview(): React.ReactNode {
           showNavigator: false,
           showLineNumbers: true,
           editorHeight: "100%",
-          showPreview: true,
         }}
-        style={{ height: "100%" }}
       />
     </div>
   );

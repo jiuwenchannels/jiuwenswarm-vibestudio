@@ -7,7 +7,7 @@
  * - "agent" — single-agent mode.  Used for targeted edits, explanations, and
  *             quick bug fixes where full team overhead is not needed.
  */
-import type { StreamEventsOptions } from "@jiuwenswarm/sdk";
+import type { StreamEventsOptions } from "./client";
 import { buildAgentSystemPrefix } from "./streamParser";
 
 export type GenerationIntent =

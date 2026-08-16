@@ -105,8 +105,8 @@ export function ChatPanel(): React.ReactNode {
               break;
 
             case "status":
-              setGenerating(true, event.text);
-              addMessage({ id: uid(), role: "status", content: event.text });
+              setGenerating(true, event.status);
+              addMessage({ id: uid(), role: "status", content: event.status });
               break;
 
             case "done": {

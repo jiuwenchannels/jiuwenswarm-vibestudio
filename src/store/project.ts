@@ -70,9 +70,9 @@ export const useProjectStore = create<ProjectState>()((set) => ({
 
   setActiveFile: (path) => set({ activeFile: path }),
 
-  setGenerating: (isGenerating, agent = null) =>
+  setGenerating: (isGenerating, agent?: string) =>
     set((s) => ({
-      generation: { ...s.generation, isGenerating, activeAgent: agent },
+      generation: { ...s.generation, isGenerating, activeAgent: agent ?? null },
     })),
 
   appendToken: (token) =>
