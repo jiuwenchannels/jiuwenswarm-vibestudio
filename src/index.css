@@ -1,0 +1,8 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Sandpack takes the full height of its container */
+.sp-wrapper {
+  height: 100% !important;
+}
