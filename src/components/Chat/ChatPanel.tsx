@@ -154,9 +154,9 @@ export function ChatPanel(): React.ReactNode {
   );
 
   return (
-    <div className="flex flex-col h-full bg-gray-900">
+    <div className="flex flex-col h-full bg-vs-surface">
       {/* Connection status bar */}
-      <div className="flex items-center gap-2 px-4 py-2 border-b border-gray-800 text-xs text-gray-500">
+      <div className="flex items-center gap-2 px-4 py-2 border-b border-vs-border text-xs text-vs-muted">
         <span
           className={`w-2 h-2 rounded-full ${connected ? "bg-green-500" : "bg-red-500"}`}
         />
@@ -166,8 +166,8 @@ export function ChatPanel(): React.ReactNode {
       {/* Message list */}
       <div className="flex-1 overflow-y-auto py-4 space-y-1">
         {messages.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-full text-gray-500 gap-3 px-8 text-center">
-            <p className="text-lg font-semibold text-gray-300">What do you want to build?</p>
+          <div className="flex flex-col items-center justify-center h-full text-vs-muted gap-3 px-8 text-center">
+            <p className="text-lg font-semibold text-vs-text">What do you want to build?</p>
             <p className="text-sm">
               Describe your app in plain language. JiuwenSwarm agents will write
               the code and show you a live preview.
@@ -183,7 +183,7 @@ export function ChatPanel(): React.ReactNode {
       {/* Input */}
       <form
         onSubmit={(e) => { void handleSubmit(e); }}
-        className="border-t border-gray-800 p-4 flex gap-3"
+        className="border-t border-vs-border p-4 flex gap-3"
       >
         <textarea
           value={input}
@@ -201,8 +201,8 @@ export function ChatPanel(): React.ReactNode {
           }
           disabled={!activeSessionId}
           rows={2}
-          className="flex-1 resize-none rounded-xl bg-gray-800 border border-gray-700 px-4 py-3
-                     text-sm text-gray-100 placeholder-gray-500 focus:outline-none
+          className="flex-1 resize-none rounded-xl bg-vs-raised border border-vs-border px-4 py-3
+                     text-sm text-vs-text placeholder-vs-muted focus:outline-none
                      focus:border-brand-500 disabled:opacity-50 disabled:cursor-not-allowed"
         />
         <button

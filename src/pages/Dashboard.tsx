@@ -11,6 +11,7 @@ import { useNavigate } from "react-router-dom";
 import { getClient, connectClient } from "../lib/client";
 import { useSessionStore } from "../store/session";
 import { useProjectStore } from "../store/project";
+import { useThemeStore } from "../store/theme";
 
 const STARTER_PROMPTS = [
   "Build a modern to-do app with drag-and-drop, tags, and dark mode",
@@ -23,6 +24,7 @@ export function Dashboard(): React.ReactNode {
   const navigate = useNavigate();
   const { projects, addProject, removeProject, setActive } = useSessionStore();
   const { resetProject } = useProjectStore();
+  const { isDark, toggle: toggleTheme } = useThemeStore();
 
   const [title, setTitle] = useState("");
   const [creating, setCreating] = useState(false);
@@ -76,13 +78,24 @@ export function Dashboard(): React.ReactNode {
   );
 
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100 flex flex-col">
+    <div className="min-h-screen bg-vs-bg text-vs-text flex flex-col">
       {/* Header */}
-      <header className="border-b border-gray-800 px-8 py-5 flex items-center justify-between">
+      <header className="border-b border-vs-border px-8 py-5 flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-white">VibeStudio</h1>
-          <p className="text-xs text-gray-500 mt-0.5">Build apps through conversation</p>
+          <h1 className="text-xl font-bold text-vs-text">VibeStudio</h1>
+          <p className="text-xs text-vs-muted mt-0.5">Build apps through conversation</p>
         </div>
+
+        {/* Theme toggle */}
+        <button
+          onClick={toggleTheme}
+          className="px-3 py-1.5 rounded-lg text-xs border border-vs-border
+                     bg-vs-surface hover:bg-vs-raised text-vs-muted hover:text-vs-text
+                     transition-colors"
+          title={isDark ? "Switch to light mode" : "Switch to dark mode"}
+        >
+          {isDark ? "☀ Light" : "☾ Dark"}
+        </button>
       </header>
 
       <main className="flex-1 px-8 py-10 max-w-4xl mx-auto w-full">
@@ -95,8 +108,8 @@ export function Dashboard(): React.ReactNode {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Project name (optional)"
-              className="flex-1 rounded-xl bg-gray-800 border border-gray-700 px-4 py-3
-                         text-sm placeholder-gray-500 focus:outline-none focus:border-brand-500"
+              className="flex-1 rounded-xl bg-vs-raised border border-vs-border px-4 py-3
+                         text-sm placeholder-vs-muted focus:outline-none focus:border-brand-500"
             />
             <button
               type="submit"
@@ -109,7 +122,7 @@ export function Dashboard(): React.ReactNode {
           </form>
 
           {error && (
-            <p className="mt-3 text-sm text-red-400">{error}</p>
+            <p className="mt-3 text-sm text-red-500">{error}</p>
           )}
 
           {/* Starter prompts */}
@@ -118,8 +131,8 @@ export function Dashboard(): React.ReactNode {
               <button
                 key={prompt}
                 onClick={() => setTitle(prompt.slice(0, 60))}
-                className="text-xs px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700
-                           text-gray-400 hover:text-gray-200 transition-colors text-left"
+                className="text-xs px-3 py-1.5 rounded-lg bg-vs-raised hover:bg-vs-border
+                           text-vs-muted hover:text-vs-text transition-colors text-left"
               >
                 {prompt}
               </button>
@@ -135,17 +148,17 @@ export function Dashboard(): React.ReactNode {
               {projects.map((project) => (
                 <div
                   key={project.sessionId}
-                  className="group relative rounded-xl bg-gray-900 border border-gray-800
-                             hover:border-gray-700 p-5 cursor-pointer transition-colors"
+                  className="group relative rounded-xl bg-vs-surface border border-vs-border
+                             hover:border-vs-border-light p-5 cursor-pointer transition-colors"
                   onClick={() => openProject(project.sessionId)}
                 >
-                  <h3 className="font-medium text-white truncate">{project.title}</h3>
+                  <h3 className="font-medium text-vs-text truncate">{project.title}</h3>
                   {project.description && (
-                    <p className="mt-1 text-xs text-gray-500 line-clamp-2">
+                    <p className="mt-1 text-xs text-vs-muted line-clamp-2">
                       {project.description}
                     </p>
                   )}
-                  <p className="mt-3 text-xs text-gray-600">
+                  <p className="mt-3 text-xs text-vs-faint">
                     {new Date(project.createdAt).toLocaleDateString()}
                   </p>
 
@@ -154,9 +167,9 @@ export function Dashboard(): React.ReactNode {
                       e.stopPropagation();
                       void deleteProject(project.sessionId);
                     }}
-                    className="absolute top-3 right-3 p-1.5 rounded-lg text-gray-600
-                               opacity-0 group-hover:opacity-100 hover:text-red-400
-                               hover:bg-gray-800 transition-all text-xs"
+                    className="absolute top-3 right-3 p-1.5 rounded-lg text-vs-faint
+                               opacity-0 group-hover:opacity-100 hover:text-red-500
+                               hover:bg-vs-raised transition-all text-xs"
                     title="Delete project"
                   >
                     ✕
@@ -168,7 +181,7 @@ export function Dashboard(): React.ReactNode {
         )}
 
         {projects.length === 0 && (
-          <p className="text-gray-600 text-sm text-center mt-12">
+          <p className="text-vs-faint text-sm text-center mt-12">
             No projects yet. Create one above to get started.
           </p>
         )}

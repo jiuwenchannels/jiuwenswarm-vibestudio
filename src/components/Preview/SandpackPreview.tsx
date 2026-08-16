@@ -4,9 +4,11 @@
  *
  * The preview automatically re-renders whenever the project store's `files`
  * map changes (i.e., when the agent finishes a generation turn).
+ * The Sandpack colour theme tracks the global dark/light preference.
  */
 import { Sandpack } from "@codesandbox/sandpack-react";
 import { useProjectStore } from "../../store/project";
+import { useThemeStore } from "../../store/theme";
 
 /** Minimal placeholder shown before the first generation. */
 const PLACEHOLDER_FILES = {
@@ -37,6 +39,7 @@ const PLACEHOLDER_FILES = {
 export function SandpackPreview(): React.ReactNode {
   const files = useProjectStore((s) => s.files);
   const isGenerating = useProjectStore((s) => s.generation.isGenerating);
+  const isDark = useThemeStore((s) => s.isDark);
 
   // Convert the project file map to Sandpack's expected shape.
   const sandpackFiles =
@@ -53,7 +56,7 @@ export function SandpackPreview(): React.ReactNode {
     <div className="relative h-full">
       {/* Overlay while generating */}
       {isGenerating && (
-        <div className="absolute inset-0 z-10 bg-gray-950/60 flex items-center justify-center gap-3 text-sm text-gray-300">
+        <div className="absolute inset-0 z-10 bg-vs-bg/60 flex items-center justify-center gap-3 text-sm text-vs-text">
           <span className="animate-spin w-4 h-4 border-2 border-brand-500 border-t-transparent rounded-full" />
           Generating…
         </div>
@@ -62,7 +65,7 @@ export function SandpackPreview(): React.ReactNode {
       <Sandpack
         files={sandpackFiles}
         template="react-ts"
-        theme="dark"
+        theme={isDark ? "dark" : "light"}
         options={{
           showNavigator: false,
           showLineNumbers: true,

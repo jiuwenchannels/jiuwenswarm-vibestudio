@@ -6,8 +6,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>VibeStudio — Build apps through conversation</title>
     <meta name="description" content="Describe what you want to build. JiuwenSwarm agents write the code, you get a working app." />
+
+    <!--
+      Anti-flash theme script: runs synchronously before any React paint.
+      Reads the persisted Zustand state from localStorage (key: "vs-theme").
+      Falls back to the OS preference when nothing is stored.
+    -->
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem("vs-theme");
+          var isDark = stored
+            ? JSON.parse(stored).state?.isDark
+            : window.matchMedia("(prefers-color-scheme: dark)").matches;
+          if (isDark) document.documentElement.classList.add("dark");
+        } catch (_) {}
+      })();
+    </script>
   </head>
-  <body class="bg-gray-950 text-gray-100 antialiased">
+  <body class="bg-vs-bg text-vs-text antialiased">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

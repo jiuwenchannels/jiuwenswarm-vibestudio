@@ -60,9 +60,9 @@ function TreeNodeView({ node, depth, activeFile, onSelect }: NodeProps): ReactNo
           onClick={() => node.isFile && onSelect(node.path)}
           className={[
             "w-full text-left flex items-center gap-1.5 px-2 py-1 text-xs rounded",
-            "hover:bg-gray-800 transition-colors",
-            isActive ? "bg-gray-700 text-brand-400" : "text-gray-400",
-            node.isFile ? "cursor-pointer" : "cursor-default font-medium text-gray-300",
+            "hover:bg-vs-raised transition-colors",
+            isActive ? "bg-vs-raised text-brand-500" : "text-vs-muted",
+            node.isFile ? "cursor-pointer" : "cursor-default font-medium text-vs-text",
           ].join(" ")}
           style={{ paddingLeft: `${8 + depth * 12}px` }}
         >
@@ -93,8 +93,8 @@ export function FileTree(): ReactNode {
   const hasFiles = Object.keys(files).length > 0;
 
   return (
-    <div className="h-full bg-gray-900 border-r border-gray-800 overflow-y-auto">
-      <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-800">
+    <div className="h-full bg-vs-surface overflow-y-auto">
+      <div className="px-3 py-2 text-xs font-semibold text-vs-muted uppercase tracking-wider border-b border-vs-border">
         Files
       </div>
 
@@ -106,7 +106,7 @@ export function FileTree(): ReactNode {
           onSelect={setActiveFile}
         />
       ) : (
-        <div className="px-3 py-4 text-xs text-gray-600 text-center">
+        <div className="px-3 py-4 text-xs text-vs-faint text-center">
           No files yet.
           <br />
           Generate your first app.

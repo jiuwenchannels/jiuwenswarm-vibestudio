@@ -2,6 +2,36 @@
 @tailwind components;
 @tailwind utilities;
 
+/* -------------------------------------------------------------------------
+   VibeStudio semantic colour tokens
+   Components use bg-vs-*, text-vs-*, border-vs-* classes.
+   Swapping the .dark class on <html> flips every token at once.
+   ------------------------------------------------------------------------- */
+
+:root {
+  /* Light theme */
+  --vs-bg:           248 250 252;   /* slate-50   — deepest background        */
+  --vs-surface:      255 255 255;   /* white      — panel / card surface       */
+  --vs-raised:       241 245 249;   /* slate-100  — hover, button backgrounds  */
+  --vs-border:       203 213 225;   /* slate-300  — primary borders            */
+  --vs-border-light: 226 232 240;   /* slate-200  — subtle dividers            */
+  --vs-text:          15  23  42;   /* slate-900  — primary text               */
+  --vs-muted:        100 116 139;   /* slate-500  — secondary / placeholder    */
+  --vs-faint:        148 163 184;   /* slate-400  — disabled / hint text       */
+}
+
+.dark {
+  /* Dark theme */
+  --vs-bg:             3   7  18;   /* gray-950   — deepest background         */
+  --vs-surface:       17  24  39;   /* gray-900   — panel / card surface       */
+  --vs-raised:        31  41  55;   /* gray-800   — hover, button backgrounds  */
+  --vs-border:        31  41  55;   /* gray-800   — primary borders            */
+  --vs-border-light:  55  65  81;   /* gray-700   — subtle dividers            */
+  --vs-text:         243 244 246;   /* gray-100   — primary text               */
+  --vs-muted:        107 114 128;   /* gray-500   — secondary / placeholder    */
+  --vs-faint:         75  85  99;   /* gray-600   — disabled / hint text       */
+}
+
 /* Sandpack takes the full height of its container */
 .sp-wrapper {
   height: 100% !important;
