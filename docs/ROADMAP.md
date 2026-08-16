@@ -1,136 +1,111 @@
 # VibeStudio Roadmap
 
-Each stage is intentionally small-to-medium: the goal is frequent, reviewable milestones rather than large batches.  Stages within a phase may be worked in parallel.
+Each stage is intentionally small-to-medium. Stages within a phase may be
+worked in parallel where dependencies allow.
+
+**Current version: v0.2** — Phase 1 complete. Phase 2 next.
 
 ---
 
-## Phase 1 — Core generation loop *(v0.1 — current)*
-
-**[DONE]** Stage 1.1 — Project scaffold
-: Vite + React + TypeScript, Tailwind, Vitest, `@jiuwenswarm/sdk` local reference, `.env.example`.
-
-**[DONE]** Stage 1.2 — SDK singleton and connection management
-: `src/lib/client.ts` — `getClient()`, `connectClient()`, `disconnectClient()`.
-
-**[DONE]** Stage 1.3 — Stream parser
-: `parseGenerationResult()` — extracts `@@FILE:…@@END_FILE` and `@@DELETE:` blocks from token stream.
-
-**[DONE]** Stage 1.4 — Agent mode helpers
-: `pickMode()`, `inferIntent()`, `buildStreamOptions()` — selects "team" vs "agent" mode per intent.
-
-**[DONE]** Stage 1.5 — Project and session stores
-: Zustand stores for file map, generation state, rewind stack, and session list (persisted).
-
-**[DONE]** Stage 1.6 — Chat UI with live streaming
-: `ChatPanel` + `MessageBubble`; streaming tokens, status bubbles, auto-scroll.
-
-**[DONE]** Stage 1.7 — Sandpack in-browser preview
-: `SandpackPreview` — live React/TS preview from project file map; generating overlay.
-
-**[DONE]** Stage 1.8 — File tree
-: `FileTree` — nested directory view of generated files; click to set active file.
-
-**[DONE]** Stage 1.9 — Dashboard
-: Project list, create/delete sessions, starter prompt chips.
-
-**[DONE]** Stage 1.10 — Studio workspace
-: Three-column layout (FileTree | Chat | Preview); rewind button; agent status badge.
-
----
-
-## Phase 1 — Remaining stages
-
-Stage 1.11 — ZIP export
-: `src/lib/deploy/export.ts` — `exportProjectZip()` using `jszip`; Download button in Studio toolbar.
-
-Stage 1.12 — Persist generated files in session memory
-: After each generation, call `client.exportSession()` and serialize the file map into the session so it survives page reload.
-
-Stage 1.13 — Restore project files on session re-open
-: On Studio mount, call `client.getHistory()` to replay the last generation result and rebuild the file map.
-
-Stage 1.14 — Rewind integration (full cycle)
-: Wire `client.on("rewind_done")` → `popRewindSnapshot()` → re-render preview with rolled-back file map.
-
-Stage 1.15 — Project rename
-: Inline rename input in Dashboard cards; calls `client.renameSession()`.
-
-Stage 1.16 — Error boundary and disconnection recovery
-: React Error Boundary around Studio; reconnect toast; resume generation after reconnect.
-
-Stage 1.17 — Vitest CI workflow
-: GitHub Actions `.github/workflows/ci.yml` — runs `npm test` and `npm run typecheck` on every PR.
-
----
-
-## Phase 2 — Full-stack apps and richer editing
+## Phase 2 — Richer editing and deployment
 
 Stage 2.1 — Template picker on Dashboard
-: "Choose a template" modal with 6 starter templates (landing page, SaaS, dashboard, API-only, blog, portfolio).
+: "Choose a template" modal with 6 starter templates (landing page, SaaS
+  dashboard, API-only, blog, portfolio, e-commerce). Each template pre-fills
+  the first generation prompt.
 
 Stage 2.2 — Quick-action buttons in Chat
-: Pill buttons below the input: "Generate", "Fix", "Explain", "Refactor" — pre-sets intent without typing.
+: Pill buttons below the input: **Generate**, **Fix**, **Explain**,
+  **Refactor** — pre-sets the intent without typing, reducing friction for
+  non-technical users.
 
-Stage 2.3 — Monaco editor panel (read-only first)
-: Lazy-load `@monaco-editor/react`; display active file with syntax highlighting; tab between files.
+Stage 2.3 — Monaco editor panel (read-only)
+: Lazy-load `@monaco-editor/react`; replace Sandpack's built-in code view with
+  Monaco for richer syntax highlighting, code folding, and minimap. Tab
+  switcher across generated files.
 
 Stage 2.4 — Monaco editor (editable, sync to store)
-: Allow manual edits; debounce store updates; re-render Sandpack on change.
+: Allow manual edits in Monaco; debounce updates to the project store;
+  re-render Sandpack preview on change. File-level dirty indicator.
 
 Stage 2.5 — Swarm panel (agent activity sidebar)
-: Collapsible right panel; shows per-agent status from `status` stream events; token counter from `metrics` push.
+: Collapsible right panel showing per-agent status from `status` stream
+  events; real-time token counter from `metrics` push; collapsible
+  agent-task tree.
 
-Stage 2.6 — WebContainers preview (Next.js support)
-: Integrate `@stackblitz/sdk` WebContainers for projects that have an `api/` directory; toggle between Sandpack and WebContainers.
+Stage 2.6 — WebContainers preview (Next.js / server-side support)
+: Integrate `@stackblitz/sdk` WebContainers for projects that contain an
+  `api/` or `server/` directory; auto-detect and toggle between Sandpack
+  (client-only) and WebContainers (full Node.js).
 
 Stage 2.7 — Asset uploader
-: Drag-and-drop image/file upload; base64-encode and pass as `mediaItems` in SDK call; inject reference URL into conversation.
+: Drag-and-drop image/font/file upload into the Chat panel; base64-encode
+  and pass as `mediaItems` in the SDK call; inject a reference URL comment
+  into the conversation context.
 
 Stage 2.8 — Deployment to Vercel
-: OAuth connect-account flow; `src/lib/deploy/static.ts`; "Deploy to Vercel" button in toolbar; show deployment URL.
+: OAuth connect-account flow; `src/lib/deploy/vercel.ts`; "Deploy to Vercel"
+  button in the Studio toolbar; poll deployment status; show live URL when
+  ready.
 
 Stage 2.9 — Deployment to Netlify
-: Netlify API equivalent of Stage 2.8.
+: Netlify API equivalent of Stage 2.8; drops build into the Netlify CDN
+  directly from the browser ZIP export.
 
 Stage 2.10 — Mobile-responsive layout
-: Collapsible FileTree and Preview panels; bottom-sheet chat on narrow screens.
+: Collapsible Chat and Preview panels behind tab toggles on narrow screens
+  (< 768 px); bottom-sheet prompt input; touch-friendly file tree.
 
 Stage 2.11 — Session export (conversation as Markdown)
-: "Export chat" button; calls `client.exportSession(sessionId, "markdown")`; download `.md` file.
+: "Export chat" button in the Studio toolbar; calls
+  `client.exportSession(sessionId, "markdown")`; downloads a `.md` file
+  containing the full conversation and the final file listing.
 
-Stage 2.12 — Dark/light theme toggle
-: System preference detection; Tailwind `dark:` classes; persisted preference.
+Stage 2.12 — Reconnect toast notification
+: Visible toast banner when the WebSocket drops; shows retry count and
+  elapsed time; "Reconnect now" manual trigger button; dismisses
+  automatically on reconnect.
 
 ---
 
 ## Phase 3 — Collaboration and extensibility
 
-Stage 3.1 — VibeStudio server (Node.js/Next.js)
-: Minimal backend for OAuth token relay, team workspace management, and future webhook handling.
+Stage 3.1 — VibeStudio server (Node.js / Next.js)
+: Minimal backend for OAuth token relay, team workspace management, and
+  future webhook handling.
 
 Stage 3.2 — Shared project URL (read-only view)
-: Generate a shareable URL; recipients can view the live project and conversation without editing.
+: Generate a shareable URL; recipients can view the live project and
+  conversation without editing.
 
 Stage 3.3 — Shared editing (Y.js + Liveblocks)
-: Real-time collaboration: shared chat input, presence cursors in the editor, conflict-free file map.
+: Real-time collaboration: shared chat input, presence cursors in the
+  editor, conflict-free file map via CRDTs.
 
 Stage 3.4 — Custom domain deployment
-: CNAME management via Vercel API; show custom domain status in Deploy panel.
+: CNAME management via Vercel API; show custom domain status in the Deploy
+  panel.
 
 Stage 3.5 — Project forking
-: "Remix this project" button; clones the session (conversation + files) into a new session.
+: "Remix this project" button; clones the session (conversation + files)
+  into a new session owned by the current user.
 
-Stage 3.6 — Plugin / tool marketplace
-: Users can enable JiuwenSwarm skills (Stripe, Supabase, Resend, etc.) that the agent team uses during generation; skill list pulled from Swarm Skills Hub.
+Stage 3.6 — Skill marketplace integration
+: Users can enable JiuwenSwarm skills (Stripe, Supabase, Resend, etc.) from
+  within VibeStudio; the agent team uses the selected skills during
+  generation; skill list pulled from Swarm Skills Hub.
 
 Stage 3.7 — Embeddable preview iframe
-: Generate an `<iframe>` embed code for the current preview; suitable for portfolio pages.
+: Generate `<iframe>` embed code for the current preview; suitable for
+  portfolio pages and public demos.
 
 Stage 3.8 — Agent feedback loop
-: After each generation, allow thumbs up/down and a short note; feed back into skill self-evolution.
+: After each generation, allow thumbs-up / thumbs-down and a short note;
+  feeds back into skill self-evolution via the JiuwenSwarm HITL loop.
 
 Stage 3.9 — Project analytics dashboard
-: Per-project token usage, generation count, and deployment history; pulled from gateway `metrics` push and session history.
+: Per-project token usage, generation count, and deployment history; pulled
+  from the gateway `metrics` push and session history API.
 
 Stage 3.10 — Internationalization (i18n)
 : `react-i18next` setup; initial locales: English and Simplified Chinese.

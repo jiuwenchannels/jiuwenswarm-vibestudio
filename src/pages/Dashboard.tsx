@@ -6,7 +6,7 @@
  * - Open an existing project.
  * - Delete a project.
  */
-import { useState, useCallback, type FormEvent } from "react";
+import { useState, useCallback, useRef, type FormEvent, type KeyboardEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { getClient, connectClient } from "../lib/client";
 import { useSessionStore } from "../store/session";
@@ -22,13 +22,43 @@ const STARTER_PROMPTS = [
 
 export function Dashboard(): React.ReactNode {
   const navigate = useNavigate();
-  const { projects, addProject, removeProject, setActive } = useSessionStore();
+  const { projects, addProject, removeProject, renameProject, setActive } = useSessionStore();
   const { resetProject } = useProjectStore();
   const { isDark, toggle: toggleTheme } = useThemeStore();
 
   const [title, setTitle] = useState("");
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Inline rename state
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState("");
+  const renameInputRef = useRef<HTMLInputElement>(null);
+
+  const startRename = useCallback((sessionId: string, currentTitle: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setRenamingId(sessionId);
+    setRenameValue(currentTitle);
+    // Focus happens via autoFocus on the input
+  }, []);
+
+  const commitRename = useCallback(async (sessionId: string): Promise<void> => {
+    const newTitle = renameValue.trim();
+    setRenamingId(null);
+    if (!newTitle || newTitle === projects.find((p) => p.sessionId === sessionId)?.title) return;
+    renameProject(sessionId, newTitle);
+    try {
+      await connectClient();
+      await getClient().renameSession(sessionId, newTitle);
+    } catch {
+      // Best-effort; local store is already updated.
+    }
+  }, [renameValue, projects, renameProject]);
+
+  const handleRenameKey = useCallback((e: KeyboardEvent<HTMLInputElement>, sessionId: string): void => {
+    if (e.key === "Enter") void commitRename(sessionId);
+    if (e.key === "Escape") setRenamingId(null);
+  }, [commitRename]);
 
   const createProject = useCallback(
     async (e: FormEvent): Promise<void> => {
@@ -152,7 +182,27 @@ export function Dashboard(): React.ReactNode {
                              hover:border-vs-border-light p-5 cursor-pointer transition-colors"
                   onClick={() => openProject(project.sessionId)}
                 >
-                  <h3 className="font-medium text-vs-text truncate">{project.title}</h3>
+                  {renamingId === project.sessionId ? (
+                    <input
+                      ref={renameInputRef}
+                      autoFocus
+                      value={renameValue}
+                      onChange={(e) => setRenameValue(e.target.value)}
+                      onBlur={() => void commitRename(project.sessionId)}
+                      onKeyDown={(e) => handleRenameKey(e, project.sessionId)}
+                      onClick={(e) => e.stopPropagation()}
+                      className="w-full font-medium bg-vs-raised border border-brand-500 rounded px-2 py-0.5
+                                 text-sm text-vs-text focus:outline-none"
+                    />
+                  ) : (
+                    <h3
+                      className="font-medium text-vs-text truncate cursor-text"
+                      title="Double-click to rename"
+                      onDoubleClick={(e) => startRename(project.sessionId, project.title, e)}
+                    >
+                      {project.title}
+                    </h3>
+                  )}
                   {project.description && (
                     <p className="mt-1 text-xs text-vs-muted line-clamp-2">
                       {project.description}

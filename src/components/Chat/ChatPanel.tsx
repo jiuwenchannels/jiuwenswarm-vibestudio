@@ -24,9 +24,11 @@ export function ChatPanel(): React.ReactNode {
   const [connected, setConnected] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  const { activeSessionId } = useSessionStore();
-  const { applyDeltas, setGenerating, appendToken, clearStreamBuffer, pushRewindable } =
-    useProjectStore();
+  const { activeSessionId, persistFiles } = useSessionStore();
+  const {
+    applyDeltas, setGenerating, appendToken, clearStreamBuffer,
+    pushRewindable, snapshotForRewind,
+  } = useProjectStore();
 
   // Connect on mount.
   useEffect(() => {
@@ -80,6 +82,8 @@ export function ChatPanel(): React.ReactNode {
       const text = input.trim();
       if (!text || !activeSessionId) return;
       setInput("");
+      // Snapshot files before this generation so rewind can restore them.
+      snapshotForRewind();
 
       addMessage({ id: uid(), role: "user", content: text });
 
@@ -111,7 +115,14 @@ export function ChatPanel(): React.ReactNode {
 
             case "done": {
               const { deltas, prose } = parseGenerationResult(accumulated);
-              if (deltas.length > 0) applyDeltas(deltas);
+              if (deltas.length > 0) {
+                applyDeltas(deltas);
+                // Persist the updated file map so it survives page reload.
+                if (activeSessionId) {
+                  const updatedFiles = useProjectStore.getState().files;
+                  persistFiles(activeSessionId, updatedFiles);
+                }
+              }
               updateLastAssistant((m) => ({
                 ...m,
                 content: prose || accumulated,
@@ -150,6 +161,8 @@ export function ChatPanel(): React.ReactNode {
       setGenerating,
       appendToken,
       clearStreamBuffer,
+      snapshotForRewind,
+      persistFiles,
     ],
   );
 

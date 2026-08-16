@@ -17,6 +17,8 @@ export interface ProjectMeta {
   createdAt: string;
   /** Optional short description (first user prompt, truncated). */
   description?: string;
+  /** Last-known generated file map — persisted so files survive page reload. */
+  files?: Record<string, string>;
 }
 
 interface SessionState {
@@ -29,6 +31,8 @@ interface SessionState {
   addProject: (session: SessionInfo, description?: string) => void;
   removeProject: (sessionId: string) => void;
   renameProject: (sessionId: string, title: string) => void;
+  /** Persist the latest generated file map for a project (survives reload). */
+  persistFiles: (sessionId: string, files: Record<string, string>) => void;
   setActive: (sessionId: string | null) => void;
   activeProject: () => ProjectMeta | null;
 }
@@ -63,6 +67,13 @@ export const useSessionStore = create<SessionState>()(
         set((s) => ({
           projects: s.projects.map((p) =>
             p.sessionId === sessionId ? { ...p, title } : p,
+          ),
+        })),
+
+      persistFiles: (sessionId, files) =>
+        set((s) => ({
+          projects: s.projects.map((p) =>
+            p.sessionId === sessionId ? { ...p, files } : p,
           ),
         })),
 

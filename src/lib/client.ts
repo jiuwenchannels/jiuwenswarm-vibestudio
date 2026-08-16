@@ -380,6 +380,11 @@ export class RpcClient {
     }
   }
 
+  /** Rename a session on the server. */
+  async renameSession(sessionId: string, title: string): Promise<void> {
+    await this._request("session.rename", { session_id: sessionId, title });
+  }
+
   /** Best-effort rewind to a previous assistant message. */
   rewind(messageId: string): void {
     this._send({

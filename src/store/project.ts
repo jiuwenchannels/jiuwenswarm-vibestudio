@@ -8,32 +8,48 @@ import { create } from "zustand";
 import type { FileDelta } from "../lib/streamParser";
 
 export interface GenerationState {
-  /** Whether an agent generation is currently in progress. */
   isGenerating: boolean;
-  /** Name of the agent currently active (from status stream events). */
   activeAgent: string | null;
-  /** Accumulated token text for the in-progress response. */
   streamBuffer: string;
 }
 
-interface ProjectState {
-  /** Generated source files, keyed by relative path. */
-  files: Record<string, string>;
-  /** Currently active file in the editor/file-tree. */
-  activeFile: string | null;
-  /** Generation progress. */
-  generation: GenerationState;
-  /** Ordered list of rewindable message IDs (most recent last). */
-  rewindStack: string[];
+export interface RewindEntry {
+  /** JiuwenSwarm message ID that marks this rewind point. */
+  msgId: string;
+  /** Snapshot of the file map BEFORE this generation ran. */
+  snapshot: Record<string, string>;
+}
 
-  // Actions
+interface ProjectState {
+  files: Record<string, string>;
+  activeFile: string | null;
+  generation: GenerationState;
+  /** Ordered list of rewind entries (most recent last). */
+  rewindStack: RewindEntry[];
+  /** Pre-generation file snapshot captured just before a submit. */
+  _pendingSnapshot: Record<string, string> | null;
+
+  // File actions
   applyDeltas: (deltas: FileDelta[]) => void;
   setActiveFile: (path: string | null) => void;
+  /** Load a full file map (e.g. restored from persisted session). */
+  loadFiles: (files: Record<string, string>) => void;
+
+  // Generation state
   setGenerating: (generating: boolean, agent?: string) => void;
   appendToken: (token: string) => void;
   clearStreamBuffer: () => void;
+
+  // Rewind
+  /** Snapshot current files as the pre-generation baseline. Call before each submit. */
+  snapshotForRewind: () => void;
+  /** Associate the pending snapshot with a server-assigned message ID. */
   pushRewindable: (messageId: string) => void;
-  popRewindSnapshot: (messageId: string) => void;
+  /** Pop the latest entry, return its snapshot (or null if stack is empty). */
+  popRewindSnapshot: () => Record<string, string> | null;
+  /** Replace current files with a previously saved snapshot. */
+  restoreSnapshot: (snapshot: Record<string, string>) => void;
+
   resetProject: () => void;
 }
 
@@ -43,11 +59,12 @@ const INITIAL_GENERATION: GenerationState = {
   streamBuffer: "",
 };
 
-export const useProjectStore = create<ProjectState>()((set) => ({
+export const useProjectStore = create<ProjectState>()((set, get) => ({
   files: {},
   activeFile: null,
   generation: INITIAL_GENERATION,
   rewindStack: [],
+  _pendingSnapshot: null,
 
   applyDeltas: (deltas) =>
     set((s) => {
@@ -59,9 +76,7 @@ export const useProjectStore = create<ProjectState>()((set) => ({
           next[delta.path] = delta.content;
         }
       }
-      // Auto-select a sensible active file on first generation.
-      const firstFile =
-        deltas.find((d) => d.action !== "delete")?.path ?? null;
+      const firstFile = deltas.find((d) => d.action !== "delete")?.path ?? null;
       return {
         files: next,
         activeFile: s.activeFile ?? firstFile,
@@ -69,6 +84,12 @@ export const useProjectStore = create<ProjectState>()((set) => ({
     }),
 
   setActiveFile: (path) => set({ activeFile: path }),
+
+  loadFiles: (files) =>
+    set((s) => ({
+      files,
+      activeFile: s.activeFile ?? Object.keys(files)[0] ?? null,
+    })),
 
   setGenerating: (isGenerating, agent?: string) =>
     set((s) => ({
@@ -84,20 +105,32 @@ export const useProjectStore = create<ProjectState>()((set) => ({
     })),
 
   clearStreamBuffer: () =>
-    set((s) => ({
-      generation: { ...s.generation, streamBuffer: "" },
-    })),
+    set((s) => ({ generation: { ...s.generation, streamBuffer: "" } })),
+
+  snapshotForRewind: () =>
+    set((s) => ({ _pendingSnapshot: { ...s.files } })),
 
   pushRewindable: (messageId) =>
-    set((s) => ({
-      rewindStack: [...s.rewindStack, messageId],
-    })),
-
-  popRewindSnapshot: (messageId) =>
     set((s) => {
-      const idx = s.rewindStack.lastIndexOf(messageId);
-      if (idx === -1) return s;
-      return { rewindStack: s.rewindStack.slice(0, idx) };
+      const snapshot = s._pendingSnapshot ?? {};
+      return {
+        rewindStack: [...s.rewindStack, { msgId: messageId, snapshot }],
+        _pendingSnapshot: null,
+      };
+    }),
+
+  popRewindSnapshot: () => {
+    const stack = get().rewindStack;
+    if (stack.length === 0) return null;
+    const entry = stack[stack.length - 1];
+    set((s) => ({ rewindStack: s.rewindStack.slice(0, -1) }));
+    return entry.snapshot;
+  },
+
+  restoreSnapshot: (snapshot) =>
+    set({
+      files: snapshot,
+      activeFile: Object.keys(snapshot)[0] ?? null,
     }),
 
   resetProject: () =>
@@ -106,5 +139,6 @@ export const useProjectStore = create<ProjectState>()((set) => ({
       activeFile: null,
       generation: INITIAL_GENERATION,
       rewindStack: [],
+      _pendingSnapshot: null,
     }),
 }));

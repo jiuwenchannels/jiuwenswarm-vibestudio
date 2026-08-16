@@ -5,29 +5,37 @@
  *   [ChatPanel ~40%] | [SandpackPreview ~60%]
  *
  * With code panel open:
- *   [FileTree 180px] | [ChatPanel ~40%] | [SandpackPreview ~60%]
+ *   [FileTree 180px] | [ChatPanel ~40%] | [SandpackPreview with editor ~60%]
  *
- * The session ID comes from the URL param (:sessionId).  On mount we
- * ensure the SDK's active session is set accordingly.
+ * Features:
+ * - Restores persisted files on mount (Stage 1.12 / 1.13).
+ * - Full rewind cycle via rewind_done event (Stage 1.14).
+ * - ZIP download button (Stage 1.11).
+ * - Wrapped in ErrorBoundary (Stage 1.16).
  */
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { ChatPanel } from "../components/Chat/ChatPanel";
 import { SandpackPreview } from "../components/Preview/SandpackPreview";
 import { FileTree } from "../components/FileExplorer/FileTree";
+import { ErrorBoundary } from "../components/ErrorBoundary";
 import { getClient, connectClient } from "../lib/client";
+import { downloadProjectZip } from "../lib/export";
 import { useSessionStore } from "../store/session";
 import { useProjectStore } from "../store/project";
 import { useThemeStore } from "../store/theme";
 
-export function Studio(): React.ReactNode {
+function StudioInner(): React.ReactNode {
   const { sessionId } = useParams<{ sessionId: string }>();
   const { setActive, activeProject, projects } = useSessionStore();
-  const { generation, rewindStack } = useProjectStore();
+  const {
+    generation, rewindStack, files,
+    loadFiles, popRewindSnapshot, restoreSnapshot,
+  } = useProjectStore();
   const { isDark, toggle: toggleTheme } = useThemeStore();
   const [showCode, setShowCode] = useState(false);
 
-  // Ensure the session is active in the SDK and in our store.
+  // Connect, activate session, and restore persisted files.
   useEffect(() => {
     if (!sessionId) return;
     setActive(sessionId);
@@ -38,15 +46,40 @@ export function Studio(): React.ReactNode {
         client.sessions.setActive(sessionId);
       })
       .catch(console.error);
-  }, [sessionId, setActive]);
+
+    // Restore the last-known file map from the persisted session store (Stage 1.12/1.13).
+    const meta = useSessionStore.getState().projects.find((p) => p.sessionId === sessionId);
+    if (meta?.files && Object.keys(meta.files).length > 0) {
+      loadFiles(meta.files);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId]);
+
+  // Listen for rewind_done — pop snapshot and restore files (Stage 1.14).
+  useEffect(() => {
+    const client = getClient();
+    // Cast needed because the SDK's event typings don't enumerate every event name.
+    const onRewindDone = (): void => {
+      const snapshot = popRewindSnapshot();
+      if (snapshot !== null) restoreSnapshot(snapshot);
+    };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (client as any).on("rewind_done", onRewindDone);
+    return () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (client as any).off("rewind_done", onRewindDone);
+    };
+  }, [popRewindSnapshot, restoreSnapshot]);
 
   const project = activeProject() ?? projects.find((p) => p.sessionId === sessionId);
 
   const handleRewind = (): void => {
-    const messageId = rewindStack[rewindStack.length - 1];
-    if (messageId) {
-      getClient().rewind(messageId);
-    }
+    const latest = rewindStack[rewindStack.length - 1];
+    if (latest) getClient().rewind(latest.msgId);
+  };
+
+  const handleDownload = (): void => {
+    downloadProjectZip(files, project?.title ?? "project");
   };
 
   return (
@@ -75,7 +108,7 @@ export function Studio(): React.ReactNode {
             </span>
           )}
 
-          {/* Rewind button — only visible when there's something to undo */}
+          {/* Rewind / Undo — only when there's something to undo */}
           {rewindStack.length > 0 && !generation.isGenerating && (
             <button
               onClick={handleRewind}
@@ -88,6 +121,19 @@ export function Studio(): React.ReactNode {
             </button>
           )}
 
+          {/* Download ZIP — only when files exist */}
+          {Object.keys(files).length > 0 && (
+            <button
+              onClick={handleDownload}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs
+                         bg-vs-raised hover:bg-vs-border text-vs-muted hover:text-vs-text
+                         transition-colors border border-vs-border"
+              title="Download project as ZIP"
+            >
+              ↓ ZIP
+            </button>
+          )}
+
           {/* Code toggle */}
           <button
             onClick={() => setShowCode((v) => !v)}
@@ -97,7 +143,7 @@ export function Studio(): React.ReactNode {
                           ? "bg-brand-900 border-brand-700 text-brand-300"
                           : "bg-vs-raised border-vs-border text-vs-muted hover:text-vs-text hover:bg-vs-border"
                         }`}
-            title={showCode ? "Hide file explorer" : "Show file explorer"}
+            title={showCode ? "Hide file explorer and editor" : "Show file explorer and editor"}
           >
             {"</>"}  {showCode ? "Hide code" : "Code"}
           </button>
@@ -117,23 +163,28 @@ export function Studio(): React.ReactNode {
 
       {/* Main workspace */}
       <div className="flex flex-1 overflow-hidden">
-        {/* File tree — hidden by default, shown when user toggles Code */}
         {showCode && (
           <div className="w-44 shrink-0 border-r border-vs-border">
             <FileTree />
           </div>
         )}
 
-        {/* Chat */}
         <div className="w-[38%] shrink-0 border-r border-vs-border">
           <ChatPanel />
         </div>
 
-        {/* Preview — shows code editor alongside preview when showCode is on */}
         <div className="flex-1 overflow-hidden">
           <SandpackPreview showEditor={showCode} />
         </div>
       </div>
     </div>
+  );
+}
+
+export function Studio(): React.ReactNode {
+  return (
+    <ErrorBoundary context="Studio">
+      <StudioInner />
+    </ErrorBoundary>
   );
 }
