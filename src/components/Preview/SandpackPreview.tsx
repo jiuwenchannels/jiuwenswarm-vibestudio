@@ -1,14 +1,30 @@
 /**
- * SandpackPreview — renders the generated project files in a live sandboxed
- * browser environment using @codesandbox/sandpack-react.
+ * SandpackPreview — live sandboxed preview (and optional code editor) for the
+ * generated project files, powered by @codesandbox/sandpack-react.
  *
- * The preview automatically re-renders whenever the project store's `files`
- * map changes (i.e., when the agent finishes a generation turn).
- * The Sandpack colour theme tracks the global dark/light preference.
+ * showEditor = false (default / Base44-style):
+ *   Full-width live preview only — no code editor visible.
+ *
+ * showEditor = true (when user clicks "Code"):
+ *   Code editor on the left + live preview on the right, Sandpack-native split.
+ *
+ * The Sandpack theme tracks the global dark/light preference.
+ * Note: the live preview runs in an iframe with its own document — its
+ * background colour is determined by the generated app's own CSS, not by
+ * VibeStudio's theme.
  */
-import { Sandpack } from "@codesandbox/sandpack-react";
+import {
+  SandpackProvider,
+  SandpackLayout,
+  SandpackPreview as SandpackPreviewPane,
+  SandpackCodeEditor,
+} from "@codesandbox/sandpack-react";
 import { useProjectStore } from "../../store/project";
 import { useThemeStore } from "../../store/theme";
+
+interface Props {
+  showEditor?: boolean;
+}
 
 /** Minimal placeholder shown before the first generation. */
 const PLACEHOLDER_FILES = {
@@ -36,12 +52,11 @@ const PLACEHOLDER_FILES = {
   },
 };
 
-export function SandpackPreview(): React.ReactNode {
+export function SandpackPreview({ showEditor = false }: Props): React.ReactNode {
   const files = useProjectStore((s) => s.files);
   const isGenerating = useProjectStore((s) => s.generation.isGenerating);
   const isDark = useThemeStore((s) => s.isDark);
 
-  // Convert the project file map to Sandpack's expected shape.
   const sandpackFiles =
     Object.keys(files).length > 0
       ? Object.fromEntries(
@@ -62,16 +77,25 @@ export function SandpackPreview(): React.ReactNode {
         </div>
       )}
 
-      <Sandpack
+      <SandpackProvider
         files={sandpackFiles}
         template="react-ts"
         theme={isDark ? "dark" : "light"}
-        options={{
-          showNavigator: false,
-          showLineNumbers: true,
-          editorHeight: "100%",
-        }}
-      />
+      >
+        <SandpackLayout style={{ height: "100%", borderRadius: 0, border: "none" }}>
+          {showEditor && (
+            <SandpackCodeEditor
+              showLineNumbers
+              showTabs
+              style={{ height: "100%", flex: 1 }}
+            />
+          )}
+          <SandpackPreviewPane
+            style={{ height: "100%", flex: showEditor ? 1 : 1 }}
+            showNavigator={false}
+          />
+        </SandpackLayout>
+      </SandpackProvider>
     </div>
   );
 }

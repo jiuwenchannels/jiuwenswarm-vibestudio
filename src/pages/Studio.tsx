@@ -129,9 +129,9 @@ export function Studio(): React.ReactNode {
           <ChatPanel />
         </div>
 
-        {/* Preview */}
+        {/* Preview — shows code editor alongside preview when showCode is on */}
         <div className="flex-1 overflow-hidden">
-          <SandpackPreview />
+          <SandpackPreview showEditor={showCode} />
         </div>
       </div>
     </div>
