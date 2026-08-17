@@ -3,8 +3,8 @@
  *
  * The live preview is bundled locally by the Vite dev server
  * (POST /api/preview → esbuild, resolving React from local node_modules), so
- * it works without reaching CodeSandbox/unpkg. The code editor still uses
- * Sandpack (its CodeMirror editor runs fully offline).
+ * it works without reaching CodeSandbox/unpkg. The code editor uses Sandpack
+ * (its CodeMirror editor runs fully offline).
  *
  * Layout: the preview is the hero surface; the code editor (when enabled) is a
  * resizable drawer at the bottom — a vertical split — so it never squeezes the
@@ -33,8 +33,8 @@ interface Props {
 
 /**
  * Bridges the project store's activeFile (driven by the FileTree) into
- * Sandpack's internal store, so clicking a file in the tree opens it in the
- * editor. Sandpack keys are rooted with a leading slash.
+ * Sandpack's internal store, so clicking a file in the tree switches the
+ * editor to it. Sandpack keys are rooted with a leading slash.
  *
  * The `sandpack` object identity changes on every Sandpack render, so it is
  * kept in a ref rather than the dependency array — otherwise the effect would
@@ -283,7 +283,6 @@ function inlineHtml(
 
   let out = html;
 
-  // <link rel="stylesheet" href="x.css"> → <style>…</style>
   out = out.replace(
     /<link\b[^>]*\brel=["']?stylesheet["']?[^>]*\bhref=["']([^"']+)["'][^>]*\/?>/gi,
     (tag, href: string) => {
@@ -292,7 +291,6 @@ function inlineHtml(
     },
   );
 
-  // <script src="x.js"></script> and <script src="x.js" /> → inline
   out = out.replace(
     /<script\b[^>]*\bsrc=["']([^"']+)["'][^>]*>\s*<\/script>/gi,
     (tag, src: string) => {
@@ -451,8 +449,8 @@ export function SandpackPreview({
 }
 
 /**
- * The code drawer combines a file explorer and the code editor side-by-side
- * (like VS Code), so a single "Code" toggle gives both navigation and editing.
+ * The code drawer: a collapsible file tree next to the code editor. The tree
+ * gives hierarchical navigation; clicking a file switches the editor to it.
  */
 function CodeEditorPanel(): ReactNode {
   return (
