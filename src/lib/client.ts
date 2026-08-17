@@ -53,7 +53,7 @@ interface EventPayloadMap {
 interface PendingRequest {
   resolve: (payload: Record<string, unknown>) => void;
   reject: (err: Error) => void;
-  timer: number;
+  timer: ReturnType<typeof setTimeout>;
 }
 
 interface ActiveStream {

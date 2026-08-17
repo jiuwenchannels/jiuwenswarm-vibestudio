@@ -1,24 +1,21 @@
 /**
- * SandpackPreview — live sandboxed preview (and optional code drawer) for the
- * generated project files, powered by @codesandbox/sandpack-react.
+ * SandpackPreview — the live preview (offline) + optional code editor.
  *
- * Layout: the preview is the hero surface. The code editor (when enabled) is a
+ * The live preview is bundled locally by the Vite dev server
+ * (POST /api/preview → esbuild, resolving React from local node_modules), so
+ * it works without reaching CodeSandbox/unpkg. The code editor still uses
+ * Sandpack (its CodeMirror editor runs fully offline).
+ *
+ * Layout: the preview is the hero surface; the code editor (when enabled) is a
  * resizable drawer at the bottom — a vertical split — so it never squeezes the
- * preview sideways. The editor's active file is driven by the project store,
- * so clicking a file in the tree opens it here.
- *
- * The Sandpack theme tracks the global dark/light preference.
- * Note: the live preview runs in an iframe with its own document — its
- * background colour is determined by the generated app's own CSS, not by
- * VibeStudio's theme.
+ * preview sideways. Clicking a file in the tree opens it in the editor.
  */
 import {
   SandpackProvider,
-  SandpackPreview as SandpackPreviewPane,
   SandpackCodeEditor,
   useSandpack,
 } from "@codesandbox/sandpack-react";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useProjectStore } from "../../store/project";
 import { useThemeStore } from "../../store/theme";
 import { Resizer } from "../Resizer";
@@ -58,75 +55,78 @@ function SyncActiveFile(): null {
   return null;
 }
 
-const STATUS_LABELS: Record<string, string> = {
-  initializing: "Starting…",
-  "installing-dependencies": "Installing dependencies…",
-  transpiling: "Transpiling…",
-  evaluating: "Running…",
-  idle: "Idle",
-  done: "",
-};
+type PreviewState =
+  | { kind: "loading" }
+  | { kind: "ready"; bundle: string }
+  | { kind: "error"; message: string };
 
 /**
- * Surfaces Sandpack bundler state: a friendly loading pill while compiling,
- * and a clear error card instead of a silent white screen when the preview
- * fails to load (commonly a network issue reaching CodeSandbox).
+ * Offline live preview. POSTs the project files to the dev server, which
+ * bundles them with esbuild (resolving React from local node_modules), then
+ * runs the returned IIFE bundle inside an iframe.
  */
-function PreviewStatusOverlay({ hidePreview }: { hidePreview: boolean }): ReactNode | null {
-  const { sandpack } = useSandpack();
-  const [showSlow, setShowSlow] = useState(false);
+function OfflinePreview({
+  files,
+  entry,
+}: {
+  files: Record<string, string>;
+  entry: string;
+}): ReactNode {
+  const [state, setState] = useState<PreviewState>({ kind: "loading" });
 
-  // If the bundler hasn't finished after a while, surface a network hint
-  // instead of an endless spinner / white screen.
   useEffect(() => {
-    const t = setTimeout(() => setShowSlow(true), 20000);
-    return () => clearTimeout(t);
-  }, []);
+    let cancelled = false;
+    setState({ kind: "loading" });
+    void (async () => {
+      try {
+        const res = await fetch("/api/preview", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ files, entry }),
+        });
+        if (!res.ok) throw new Error(`Bundle failed (HTTP ${res.status})`);
+        const bundle = await res.text();
+        if (!cancelled) setState({ kind: "ready", bundle });
+      } catch (err) {
+        if (!cancelled) setState({ kind: "error", message: String(err) });
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [files, entry]);
 
-  if (sandpack.error) {
+  if (state.kind === "loading") {
     return (
-      <div className="absolute inset-0 z-10 flex items-center justify-center bg-vs-bg/80 p-6">
+      <div className="h-full flex items-center justify-center gap-3 text-sm text-vs-muted">
+        <span className="animate-spin w-4 h-4 border-2 border-brand-500 border-t-transparent rounded-full" />
+        Bundling preview…
+      </div>
+    );
+  }
+
+  if (state.kind === "error") {
+    return (
+      <div className="h-full flex items-center justify-center p-6">
         <div className="max-w-md text-center text-sm">
-          <p className="font-semibold text-vs-text mb-1">Preview failed to load</p>
-          <p className="text-vs-muted break-words">{sandpack.error.message}</p>
+          <p className="font-semibold text-vs-text mb-1">Preview failed to build</p>
+          <p className="text-vs-muted break-words">{state.message}</p>
           <p className="mt-3 text-xs text-vs-faint">
-            Usually a network issue reaching CodeSandbox's bundler — the code in
-            the editor is still saved.
+            The preview bundles locally with esbuild and should not need the
+            internet. If this persists, check the generated code for errors.
           </p>
         </div>
       </div>
     );
   }
 
-  if (!hidePreview && sandpack.status && sandpack.status !== "done" && sandpack.status !== "idle") {
-    if (showSlow) {
-      return (
-        <div className="absolute inset-0 z-10 flex items-center justify-center bg-vs-bg/80 p-6">
-          <div className="max-w-md text-center text-sm">
-            <p className="font-semibold text-vs-text mb-1">Preview is taking a long time…</p>
-            <p className="text-vs-muted">
-              The bundler needs to reach CodeSandbox to fetch React. On this
-              network it seems blocked — the code is fine, but the live preview
-              can't start.
-            </p>
-            <p className="mt-3 text-xs text-vs-faint">
-              Try the ↓ ZIP download to run the project locally.
-            </p>
-          </div>
-        </div>
-      );
-    }
-    return (
-      <div className="absolute top-3 right-3 z-10 pointer-events-none flex items-center gap-2
-                      px-3 py-1.5 rounded-full bg-vs-surface/90 border border-vs-border
-                      shadow text-xs text-vs-muted">
-        <span className="animate-spin w-3 h-3 border border-brand-500 border-t-transparent rounded-full" />
-        {STATUS_LABELS[sandpack.status] ?? sandpack.status}
-      </div>
-    );
-  }
+  const html =
+    '<!DOCTYPE html><html><head><meta charset="utf-8" /><style>html,body,#root{height:100%;margin:0;}</style></head><body><div id="root"></div><script>' +
+    state.bundle +
+    "</scr" +
+    "ipt></body></html>";
 
-  return null;
+  return <iframe title="Preview" className="h-full w-full border-0 bg-white" srcDoc={html} />;
 }
 
 /** Minimal placeholder shown before the first generation. */
@@ -155,7 +155,7 @@ const PLACEHOLDER_FILES = {
   },
 };
 
-/** File paths Sandpack treats as a valid entry point. */
+/** File paths treated as a valid entry point. */
 const ENTRY_CANDIDATES = [
   "/index.tsx",
   "/index.jsx",
@@ -173,33 +173,70 @@ const ENTRY_CANDIDATES = [
   "/main.js",
 ];
 
+function hasEntry(files: Record<string, unknown>): boolean {
+  return ENTRY_CANDIDATES.some((p) => p in files);
+}
+
+function detectEntry(files: Record<string, unknown>): string {
+  for (const p of ENTRY_CANDIDATES) if (p in files) return p;
+  return "/index.tsx";
+}
+
+/** Hidden support files we inject so the editor shows proper syntax + tabs. */
+const SUPPORT_FILES: Record<string, { code: string; hidden: boolean }> = {
+  "/tsconfig.json": {
+    code: JSON.stringify({
+      compilerOptions: {
+        jsx: "react-jsx",
+        esModuleInterop: true,
+        strict: false,
+        lib: ["dom", "es2015"],
+      },
+      include: ["./**/*"],
+    }),
+    hidden: true,
+  },
+};
+
 /**
- * Ensure the project has an entry file Sandpack can mount. Generated apps are
- * often a single `src/App.tsx` with no `index.tsx`/`main.tsx` — without one,
- * Sandpack's react-ts template shows an error instead of the app. When no
- * known entry exists, inject a minimal `/index.tsx` that renders App.
+ * Build the full file set for a project (single-file apps get an injected
+ * `/index.tsx` entry). Returns the Sandpack file map (for the editor) plus a
+ * plain code map (for offline bundling) and the visible editor tabs.
  */
-function withEntry(
-  files: Record<string, string>,
-): Record<string, { code: string }> {
-  const sandpack = Object.fromEntries(
-    Object.entries(files).map(([path, code]) => [path, { code }]),
-  );
+function buildSetup(
+  projectFiles: Record<string, string>,
+): {
+  sandpack: Record<string, { code: string; hidden?: boolean }>;
+  code: Record<string, string>;
+  visible: string[];
+  entry: string;
+} {
+  const sandpack: Record<string, { code: string; hidden?: boolean }> = {};
+  for (const [path, code] of Object.entries(projectFiles)) {
+    sandpack[path.startsWith("/") ? path : `/${path}`] = { code };
+  }
 
-  if (ENTRY_CANDIDATES.some((path) => path in sandpack)) return sandpack;
-
-  const appPath = "/src/App.tsx" in sandpack ? "/src/App.tsx" : "/App.tsx";
-  const importPath = appPath.startsWith("/src/") ? "./src/App" : "./App";
-
-  sandpack["/index.tsx"] = {
-    code: `import React from "react";
+  if (!hasEntry(sandpack)) {
+    const appPath = "/src/App.tsx" in sandpack ? "/src/App.tsx" : "/App.tsx";
+    const importPath = appPath.startsWith("/src/") ? "./src/App" : "./App";
+    sandpack["/index.tsx"] = {
+      code: `import React from "react";
 import { createRoot } from "react-dom/client";
 import App from "${importPath}";
 
 createRoot(document.getElementById("root")!).render(<App />);`,
-  };
+    };
+  }
 
-  return sandpack;
+  for (const [path, support] of Object.entries(SUPPORT_FILES)) {
+    if (!(path in sandpack)) sandpack[path] = support;
+  }
+
+  const code: Record<string, string> = {};
+  for (const [path, file] of Object.entries(sandpack)) code[path] = file.code;
+
+  const visible = Object.keys(sandpack).filter((p) => !sandpack[p].hidden);
+  return { sandpack, code, visible, entry: detectEntry(sandpack) };
 }
 
 export function SandpackPreview({
@@ -214,20 +251,13 @@ export function SandpackPreview({
 
   const hasFiles = Object.keys(files).length > 0;
 
-  const sandpackFiles = withEntry(
-    hasFiles
-      ? Object.fromEntries(
-          Object.entries(files).map(([path, code]) => [
-            path.startsWith("/") ? path : `/${path}`,
-            code,
-          ]),
-        )
-      : { "/App.tsx": PLACEHOLDER_FILES["/App.tsx"].code },
+  const setup = useMemo(
+    () =>
+      buildSetup(
+        hasFiles ? files : { "/App.tsx": PLACEHOLDER_FILES["/App.tsx"].code },
+      ),
+    [files, hasFiles],
   );
-
-  // Only show the project's own files (plus the injected entry) in the editor —
-  // the react-ts template otherwise merges in a default Hello-world App.tsx.
-  const visibleFiles = Object.keys(sandpackFiles);
 
   return (
     <div className="relative h-full">
@@ -250,13 +280,12 @@ export function SandpackPreview({
       )}
 
       <SandpackProvider
-        files={sandpackFiles}
+        files={setup.sandpack}
         template="react-ts"
         theme={isDark ? "dark" : "light"}
-        options={{ visibleFiles }}
+        options={{ visibleFiles: setup.visible }}
       >
         <SyncActiveFile />
-        <PreviewStatusOverlay hidePreview={hidePreview} />
         {hidePreview ? (
           <div className="h-full">
             <SandpackCodeEditor
@@ -268,7 +297,7 @@ export function SandpackPreview({
         ) : (
           <div className="flex flex-col h-full">
             <div className="flex-1 min-h-0">
-              <SandpackPreviewPane style={{ height: "100%" }} showNavigator={false} />
+              <OfflinePreview files={setup.code} entry={setup.entry} />
             </div>
             {showEditor && (
               <>
