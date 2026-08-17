@@ -6,7 +6,7 @@
  * - Open an existing project.
  * - Delete a project.
  */
-import { useState, useCallback, useRef, type FormEvent, type KeyboardEvent } from "react";
+import { useState, useCallback, useRef, useEffect, type FormEvent, type KeyboardEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { getClient, connectClient } from "../lib/client";
 import { useSessionStore } from "../store/session";
@@ -24,7 +24,7 @@ const STARTER_PROMPTS = [
 export function Dashboard(): React.ReactNode {
   const navigate = useNavigate();
   const { projects, addProject, removeProject, renameProject, setActive } = useSessionStore();
-  const { resetProject } = useProjectStore();
+  const { resetProject, setInitialPrompt } = useProjectStore();
   const { isDark, toggle: toggleTheme } = useThemeStore();
 
   const [title, setTitle] = useState("");
@@ -36,6 +36,11 @@ export function Dashboard(): React.ReactNode {
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
   const renameInputRef = useRef<HTMLInputElement>(null);
+
+  // Quick-start + delete-confirm state
+  const [quickStarting, setQuickStarting] = useState<string | null>(null);
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
+  const confirmTimerRef = useRef<number | null>(null);
 
   const startRename = useCallback((sessionId: string, currentTitle: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -87,9 +92,38 @@ export function Dashboard(): React.ReactNode {
     [title, addProject, setActive, resetProject, navigate],
   );
 
+  /**
+   * Quick-start: create a project from an idea and immediately hand the full
+   * prompt to the swarm (ChatPanel auto-sends initialPrompt on mount).
+   */
+  const startQuickStart = useCallback(
+    async (prompt: string): Promise<void> => {
+      setQuickStarting(prompt);
+      setError(null);
+      try {
+        await connectClient();
+        const client = getClient();
+        const quickTitle = prompt.slice(0, 40);
+        const session = await client.sessions.create(quickTitle);
+        addProject(session, prompt.slice(0, 120));
+        setActive(session.id);
+        client.sessions.setActive(session.id);
+        resetProject();
+        setInitialPrompt(prompt);
+        navigate(`/studio/${session.id}`);
+      } catch (err) {
+        setError(`Could not start project: ${String(err)}`);
+      } finally {
+        setQuickStarting(null);
+      }
+    },
+    [addProject, setActive, resetProject, setInitialPrompt, navigate],
+  );
+
   const openProject = useCallback(
     (sessionId: string): void => {
       setActive(sessionId);
+      setConfirmingId(null);
       getClient().sessions.setActive(sessionId);
       resetProject();
       navigate(`/studio/${sessionId}`);
@@ -108,6 +142,36 @@ export function Dashboard(): React.ReactNode {
     },
     [removeProject],
   );
+
+  /**
+   * Two-step delete: the first click arms a "Confirm?" state (auto-resets after
+   * 3s); the second click actually deletes. Prevents accidental data loss.
+   */
+  const handleDeleteClick = useCallback(
+    (sessionId: string): void => {
+      if (confirmingId === sessionId) {
+        if (confirmTimerRef.current) window.clearTimeout(confirmTimerRef.current);
+        confirmTimerRef.current = null;
+        setConfirmingId(null);
+        void deleteProject(sessionId);
+        return;
+      }
+      setConfirmingId(sessionId);
+      if (confirmTimerRef.current) window.clearTimeout(confirmTimerRef.current);
+      confirmTimerRef.current = window.setTimeout(() => {
+        setConfirmingId(null);
+        confirmTimerRef.current = null;
+      }, 3000);
+    },
+    [confirmingId, deleteProject],
+  );
+
+  // Clear the confirm timer on unmount.
+  useEffect(() => {
+    return () => {
+      if (confirmTimerRef.current) window.clearTimeout(confirmTimerRef.current);
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-vs-bg text-vs-text flex flex-col">
@@ -167,18 +231,25 @@ export function Dashboard(): React.ReactNode {
             <p className="mt-3 text-sm text-red-500">{error}</p>
           )}
 
-          {/* Starter prompts */}
-          <div className="mt-4 flex flex-wrap gap-2">
-            {STARTER_PROMPTS.map((prompt) => (
-              <button
-                key={prompt}
-                onClick={() => setTitle(prompt.slice(0, 60))}
-                className="text-xs px-3 py-1.5 rounded-lg bg-vs-raised hover:bg-vs-border
-                           text-vs-muted hover:text-vs-text transition-colors text-left"
-              >
-                {prompt}
-              </button>
-            ))}
+          {/* Quick-start ideas */}
+          <div className="mt-6">
+            <h3 className="text-sm font-medium text-vs-muted mb-2">
+              Or quick-start from an idea — agents start building immediately
+            </h3>
+            <div className="flex flex-wrap gap-2">
+              {STARTER_PROMPTS.map((prompt) => (
+                <button
+                  key={prompt}
+                  onClick={() => { void startQuickStart(prompt); }}
+                  disabled={quickStarting !== null}
+                  className="text-xs px-3 py-1.5 rounded-lg bg-vs-raised hover:bg-vs-border
+                             text-vs-muted hover:text-vs-text transition-colors text-left
+                             disabled:opacity-50 disabled:cursor-wait"
+                >
+                  {quickStarting === prompt ? "Starting…" : prompt}
+                </button>
+              ))}
+            </div>
           </div>
         </section>
 
@@ -224,18 +295,43 @@ export function Dashboard(): React.ReactNode {
                     {new Date(project.createdAt).toLocaleDateString()}
                   </p>
 
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      void deleteProject(project.sessionId);
-                    }}
-                    className="absolute top-3 right-3 p-1.5 rounded-lg text-vs-faint
-                               opacity-0 group-hover:opacity-100 hover:text-red-500
-                               hover:bg-vs-raised transition-all text-xs"
-                    title="Delete project"
-                  >
-                    ✕
-                  </button>
+                  <div className="absolute top-3 right-3 flex items-center gap-1">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        startRename(project.sessionId, project.title, e);
+                      }}
+                      className="p-1.5 rounded-lg text-vs-faint opacity-70 group-hover:opacity-100
+                                 hover:text-vs-text hover:bg-vs-raised transition-all text-xs"
+                      title="Rename project"
+                      aria-label={`Rename ${project.title}`}
+                    >
+                      ✎
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteClick(project.sessionId);
+                      }}
+                      className={`p-1.5 rounded-lg text-xs transition-all ${
+                        confirmingId === project.sessionId
+                          ? "bg-red-500 text-white hover:bg-red-600 px-2 font-medium"
+                          : "text-vs-faint opacity-70 group-hover:opacity-100 hover:text-red-500 hover:bg-vs-raised"
+                      }`}
+                      title={
+                        confirmingId === project.sessionId
+                          ? "Click again to confirm deletion"
+                          : "Delete project"
+                      }
+                      aria-label={
+                        confirmingId === project.sessionId
+                          ? `Confirm deleting ${project.title}`
+                          : `Delete ${project.title}`
+                      }
+                    >
+                      {confirmingId === project.sessionId ? "Confirm?" : "✕"}
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>

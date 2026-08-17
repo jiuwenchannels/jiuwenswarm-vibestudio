@@ -58,17 +58,14 @@ When you open a project you enter the Studio.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
-│  ← Dashboard  |  Project name     ↩ Undo  ↓ ZIP  ↓ Chat  ⚡ Swarm  </> │
-├──────────────────────┬────────────────────────────┬──────────────────────┤
-│                      │                            │                      │
-│   Chat panel         │   Live preview             │   Swarm panel        │
-│   (send prompts,     │   (your app running live)  │   (agent activity,   │
-│   see responses)     │                            │   optional)          │
-│                      │                            │                      │
-└──────────────────────┴────────────────────────────┴──────────────────────┘
+│  ← Dashboard  |  Project name     ↩ Undo  ↓ ZIP  ↓ Chat  </>           │
+├─────────────────────────────────────────────────────────────────────────┤
+│   Chat panel                          |   Live preview                  │
+│   (send prompts, see responses,       |   (your app running live)       │
+│   plus inline swarm activity          |                                 │
+│   while agents work)                  |                                 │
+├───────────────────────────────────────┴─────────────────────────────────┤
 ```
-
-The Swarm panel is hidden by default. Toggle it with **⚡ Swarm**.
 
 ### Chat panel
 
@@ -78,7 +75,9 @@ Type your request in the text box at the bottom and press **Enter** (or
 The panel shows:
 - Your messages (right-aligned, blue).
 - Agent responses streaming in real time (left-aligned).
-- Status bubbles — what each agent is doing (`Searching…`, `Writing code…`).
+- A collapsible **Swarm activity** section that opens automatically while the
+  agents work. It lists each agent's steps and thinking with timestamps, and
+  collapses to a compact "N steps" header when generation finishes.
 
 ### Live preview
 
@@ -215,19 +214,23 @@ instead — the intent detection works the same way.
 
 ---
 
-## Swarm Activity Panel
+## Swarm Activity
 
-Click **⚡ Swarm** in the Studio toolbar to open a side panel showing
-real-time agent activity:
+While the agents are working, a collapsible **Swarm activity** section appears
+at the bottom of the chat panel:
 
-- Each line shows the agent's status message and a wall-clock timestamp.
-- An animated spinner at the bottom shows the current active agent name.
+- It opens automatically when generation starts and collapses to a compact
+  "N steps" header when it finishes — your attention stays in the chat.
+- Each entry shows a wall-clock timestamp. Agent steps are colour-coded by
+  role (Architect, Frontend, Backend, Database, QA); tool calls and thinking
+  get their own badges.
+- Long reasoning text is truncated — click **Show more** to expand it.
 - Click **Clear** to empty the log.
 
-The panel is purely informational — it does not affect generation. Closing
-it with **⚡ Swarm** again hides the panel without clearing the log.
+The section is purely informational — it does not affect generation.
+Collapsing it never clears the log.
 
-On mobile, enabling the Swarm panel adds a **Swarm** tab to the bottom tab bar.
+On mobile, the activity appears inline in the **Chat** tab — no extra tab needed.
 
 ---
 

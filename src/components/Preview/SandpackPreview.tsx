@@ -67,13 +67,25 @@ export function SandpackPreview({ showEditor = false }: Props): React.ReactNode 
         )
       : PLACEHOLDER_FILES;
 
+  const hasFiles = Object.keys(files).length > 0;
+
   return (
     <div className="relative h-full">
-      {/* Overlay while generating */}
-      {isGenerating && (
+      {/* First generation — block the placeholder while the app is built */}
+      {isGenerating && !hasFiles && (
         <div className="absolute inset-0 z-10 bg-vs-bg/60 flex items-center justify-center gap-3 text-sm text-vs-text">
           <span className="animate-spin w-4 h-4 border-2 border-brand-500 border-t-transparent rounded-full" />
           Generating…
+        </div>
+      )}
+
+      {/* Regeneration — non-blocking pill so the running app stays usable */}
+      {isGenerating && hasFiles && (
+        <div className="absolute top-3 right-3 z-10 pointer-events-none flex items-center gap-2
+                        px-3 py-1.5 rounded-full bg-vs-surface/90 border border-vs-border
+                        shadow text-xs text-vs-muted">
+          <span className="animate-spin w-3 h-3 border border-brand-500 border-t-transparent rounded-full" />
+          Regenerating…
         </div>
       )}
 

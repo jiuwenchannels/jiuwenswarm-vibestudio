@@ -58,7 +58,7 @@ jiuwenswarm-vibestudio/
 │   │   ├── FileExplorer/
 │   │   │   └── FileTree.tsx       # Nested file tree (toggleable)
 │   │   ├── Swarm/
-│   │   │   └── SwarmPanel.tsx     # Live agent activity log sidebar
+│   │   │   └── SwarmActivity.tsx    # Inline collapsible agent activity feed
 │   │   ├── TemplateModal.tsx      # Template picker overlay (6 starters)
 │   │   ├── ReconnectToast.tsx     # Floating disconnection banner
 │   │   └── ErrorBoundary.tsx      # Render-error recovery screen
@@ -334,19 +334,22 @@ On selection:
 
 ---
 
-## Swarm Activity Panel
+## Swarm Activity
 
-`components/Swarm/SwarmPanel.tsx` — collapsible panel rendered to the right of
-the Sandpack preview in Studio.
+`components/Swarm/SwarmActivity.tsx` — collapsible activity section rendered
+inline inside the chat panel, so the work-in-progress lives next to the
+conversation it belongs to instead of a separate side window.
 
 - Reads `agentLog: AgentLogEntry[]` from the project store.
-- `agentLog` is populated by `appendAgentStatus(status)`, called from
-  `ChatPanel` on every `"status"` stream event.
-- Entries include a wall-clock timestamp and the status string.
-- Auto-scrolls to the latest entry; bounded at 200 entries.
-- Shows a spinner footer badge for `generation.activeAgent`.
+- `agentLog` is populated by `appendAgentLog(entry)`, called from `ChatPanel`
+  on every `"status"` and `"reasoning"` stream event. Entries carry an
+  optional `agent` name and a `kind` classifier (`reasoning` / `status` /
+  `tool`).
+- Auto-opens when a generation starts and auto-collapses to a compact header
+  (with a step count) when generation finishes.
+- Long reasoning entries are truncated with a "Show more" toggle.
+- Entries show a wall-clock timestamp and are bounded at 200.
 - "Clear" button calls `clearAgentLog()`.
-- Toggled by the `⚡ Swarm` button in the Studio toolbar.
 
 ---
 
@@ -368,9 +371,8 @@ the side-by-side flex layout and shows a tab bar instead:
 
 | Tab | Content |
 |---|---|
-| Chat | Full-height `ChatPanel` |
+| Chat | Full-height `ChatPanel` (including inline swarm activity) |
 | Preview | Full-height `SandpackPreview` |
-| Swarm | `SwarmPanel` (only when Swarm toggle is active) |
 
 The desktop layout (hidden on mobile via `hidden md:flex`) continues to use
-the side-by-side column layout with optional FileTree / SwarmPanel columns.
+the side-by-side column layout with an optional FileTree column.

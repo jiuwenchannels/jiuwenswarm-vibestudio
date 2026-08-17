@@ -28,7 +28,8 @@ export interface StreamEventsOptions {
 
 export type StreamEvent =
   | { kind: "delta"; text: string }
-  | { kind: "status"; status: string }
+  | { kind: "status"; status: string; agent?: string }
+  | { kind: "reasoning"; text: string }
   | { kind: "done"; text?: string }
   | { kind: "error"; message: string };
 
@@ -325,13 +326,19 @@ export class RpcClient {
     let notify: (() => void) | null = null;
     const reasoningText: string[] = [];
 
-    // Collapse the agent's incremental reasoning chunks into a single status
-    // line instead of one bubble per token.
+    // Collapse the agent's incremental reasoning chunks into a single reasoning
+    // event instead of one bubble per token. Reasoning is intentionally kept
+    // separate from the chat stream so the UI can show it as activity, not
+    // conversation.
     const emitReasoning = (): void => {
       if (reasoningText.length === 0) return;
-      const text = reasoningText.join("").replace(/\s+/g, " ").trim();
+      const text = reasoningText
+        .join("")
+        .replace(/[ \t]+/g, " ")
+        .replace(/\n{3,}/g, "\n\n")
+        .trim();
       reasoningText.length = 0;
-      if (text) buffer.push({ kind: "status", status: text });
+      if (text) buffer.push({ kind: "reasoning", text });
     };
 
     const push = (event: StreamEvent): void => {
@@ -567,7 +574,7 @@ export class RpcClient {
             (inner["new_status"] as string) ||
             "";
           if (member && status) {
-            stream.push({ kind: "status", status: `${member}: ${status}` });
+            stream.push({ kind: "status", status: `${member}: ${status}`, agent: member });
           }
         }
     }

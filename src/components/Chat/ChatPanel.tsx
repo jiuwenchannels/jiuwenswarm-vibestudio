@@ -6,14 +6,17 @@
  * - Quick-action pill buttons below the input (Stage 2.2).
  * - Reads initialPrompt from the project store and auto-sends it on mount,
  *   enabling the template picker to pre-populate the first generation.
- * - Appends agent statuses to the agentLog for the Swarm panel (Stage 2.5).
+ * - Appends agent statuses to the agentLog and renders them inline via
+ *   SwarmActivity — the activity lives in the chat window it belongs to
+ *   instead of a separate side panel.
  */
 import { useRef, useEffect, useCallback, useState, type FormEvent } from "react";
 import { MessageBubble } from "./MessageBubble";
+import { SwarmActivity } from "../Swarm/SwarmActivity";
 import type { ChatMessage } from "../../store/project";
 import { getClient } from "../../lib/client";
 import { buildStreamOptions, inferIntent } from "../../lib/agentMode";
-import { parseGenerationResult } from "../../lib/streamParser";
+import { parseGenerationResult, collapseFileBlocks } from "../../lib/streamParser";
 import { useProjectStore } from "../../store/project";
 import { useSessionStore } from "../../store/session";
 
@@ -36,10 +39,11 @@ export function ChatPanel(): React.ReactNode {
   const { activeSessionId, persistFiles } = useSessionStore();
   const {
     messages,
+    generation,
     addChatMessage, updateLastAssistantMessage,
     applyDeltas, setGenerating, appendToken, clearStreamBuffer,
     pushRewindable, snapshotForRewind,
-    appendAgentStatus,
+    appendAgentLog,
     initialPrompt, setInitialPrompt,
   } = useProjectStore();
 
@@ -74,6 +78,9 @@ export function ChatPanel(): React.ReactNode {
       e.preventDefault();
       const text = (overrideText ?? input).trim();
       if (!text || !activeSessionId) return;
+      // The RPC client only supports one active stream — never start a second
+      // generation while one is already running.
+      if (useProjectStore.getState().generation.isGenerating) return;
       if (!overrideText) setInput("");
 
       snapshotForRewind();
@@ -96,13 +103,33 @@ export function ChatPanel(): React.ReactNode {
             case "delta":
               accumulated += event.text;
               appendToken(event.text);
-              updateLastAssistantMessage((m) => ({ ...m, content: accumulated }));
+              // Show a clean live view — file blocks collapse to one line each
+              // instead of leaking raw @@FILE…@@END_FILE markup into the chat.
+              updateLastAssistantMessage((m) => ({
+                ...m,
+                content: collapseFileBlocks(accumulated),
+              }));
               break;
 
             case "status":
-              setGenerating(true, event.status);
-              appendAgentStatus(event.status);
-              addChatMessage({ id: uid(), role: "status", content: event.status });
+              // Short operational notes (agent state changes, tool calls) go to
+              // the Swarm activity panel — NOT the chat, so the conversation
+              // stays readable and never duplicates the activity feed.
+              setGenerating(true, event.agent ?? "Thinking…");
+              appendAgentLog({
+                status: event.status,
+                agent: event.agent,
+                kind: event.status.startsWith("Running tool:") ? "tool" : "status",
+                time: Date.now(),
+              });
+              break;
+
+            case "reasoning":
+              appendAgentLog({
+                status: event.text,
+                kind: "reasoning",
+                time: Date.now(),
+              });
               break;
 
             case "done": {
@@ -113,9 +140,15 @@ export function ChatPanel(): React.ReactNode {
                   persistFiles(activeSessionId, useProjectStore.getState().files);
                 }
               }
+              // Prefer real prose; if the agent only emitted file blocks, show a
+              // short summary instead of raw sentinel markup.
+              const summary =
+                deltas.length > 0
+                  ? `Generated ${deltas.length} file${deltas.length === 1 ? "" : "s"}.`
+                  : accumulated;
               updateLastAssistantMessage((m) => ({
                 ...m,
-                content: prose || accumulated,
+                content: prose || summary,
                 isStreaming: false,
               }));
               clearStreamBuffer();
@@ -146,7 +179,7 @@ export function ChatPanel(): React.ReactNode {
       input, activeSessionId,
       addChatMessage, updateLastAssistantMessage,
       applyDeltas, setGenerating, appendToken, clearStreamBuffer,
-      snapshotForRewind, persistFiles, appendAgentStatus,
+      snapshotForRewind, persistFiles, appendAgentLog,
     ],
   );
 
@@ -195,6 +228,9 @@ export function ChatPanel(): React.ReactNode {
         <div ref={bottomRef} />
       </div>
 
+      {/* Inline swarm activity — same window as the chat it belongs to */}
+      <SwarmActivity />
+
       {/* Quick-action pills (Stage 2.2) */}
       <div className="flex gap-2 px-4 pt-3 pb-1 shrink-0 flex-wrap">
         {QUICK_ACTIONS.map(({ label, prefix }) => (
@@ -239,11 +275,16 @@ export function ChatPanel(): React.ReactNode {
         />
         <button
           type="submit"
-          disabled={!activeSessionId || !input.trim()}
+          disabled={!activeSessionId || !input.trim() || generation.isGenerating}
           className="px-5 py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm
                      font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors self-end"
+          title={
+            generation.isGenerating
+              ? "Wait for the current generation to finish"
+              : "Send message"
+          }
         >
-          Send
+          {generation.isGenerating ? "Working…" : "Send"}
         </button>
       </form>
     </div>

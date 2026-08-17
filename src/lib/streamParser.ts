@@ -63,6 +63,18 @@ export function parseGenerationResult(fullText: string): ParseResult {
 }
 
 /**
+ * Replace every @@FILE…@@END_FILE block (and @@DELETE directive) with a
+ * compact single line, so the live streaming chat view shows file names and
+ * prose instead of raw sentinel markup.
+ */
+export function collapseFileBlocks(text: string): string {
+  return text
+    .replace(FILE_PATTERN, (_match, path: string) => `▸ ${path.trim()}`)
+    .replace(DELETE_PATTERN, (_match, path: string) => `▸ delete ${path.trim()}`)
+    .trim();
+}
+
+/**
  * Build the system prompt prefix that instructs the agent to use the file
  * marker convention when generating code.
  */

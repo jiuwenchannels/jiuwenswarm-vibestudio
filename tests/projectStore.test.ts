@@ -111,6 +111,49 @@ describe("appendAgentStatus", () => {
   });
 });
 
+describe("appendAgentLog", () => {
+  it("stores an enriched entry with agent and kind", () => {
+    useProjectStore.getState().appendAgentLog({
+      status: "Architect: planning",
+      agent: "Architect",
+      kind: "status",
+      time: 1234,
+    });
+
+    const { agentLog } = useProjectStore.getState();
+    expect(agentLog).toHaveLength(1);
+    expect(agentLog[0].agent).toBe("Architect");
+    expect(agentLog[0].kind).toBe("status");
+    expect(agentLog[0].time).toBe(1234);
+  });
+
+  it("bounds the log at 200 entries", () => {
+    const { appendAgentLog } = useProjectStore.getState();
+    for (let i = 0; i < 250; i++) {
+      appendAgentLog({ status: `entry-${i}`, time: i, kind: "reasoning" });
+    }
+    const { agentLog } = useProjectStore.getState();
+    expect(agentLog).toHaveLength(200);
+    expect(agentLog[0].status).toBe("entry-50");
+    expect(agentLog[199].status).toBe("entry-249");
+  });
+
+  it("mixes reasoning and status entries in arrival order", () => {
+    useProjectStore.getState().appendAgentLog({ status: "Thinking hard…", time: 1, kind: "reasoning" });
+    useProjectStore.getState().appendAgentLog({ status: "Running tool: grep", time: 2, kind: "tool" });
+    useProjectStore.getState().appendAgentStatus("Planning…");
+
+    const { agentLog } = useProjectStore.getState();
+    expect(agentLog.map((e) => e.status)).toEqual([
+      "Thinking hard…",
+      "Running tool: grep",
+      "Planning…",
+    ]);
+    expect(agentLog[1].kind).toBe("tool");
+    expect(agentLog[2].kind).toBeUndefined();
+  });
+});
+
 describe("clearAgentLog", () => {
   it("empties the agentLog array", () => {
     useProjectStore.getState().appendAgentStatus("Active");

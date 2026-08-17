@@ -24,9 +24,16 @@ export interface ChatMessage {
 // Agent log entry (used by the Swarm panel)
 // ---------------------------------------------------------------------------
 
+/** What a log entry represents, so the Swarm panel can style it differently. */
+export type AgentLogKind = "reasoning" | "status" | "tool";
+
 export interface AgentLogEntry {
   status: string;
   time: number; // Date.now()
+  /** Agent display name (e.g. "Architect") when known from the server. */
+  agent?: string;
+  /** Optional classifier; falls back to a heuristic in the panel. */
+  kind?: AgentLogKind;
 }
 
 // ---------------------------------------------------------------------------
@@ -85,6 +92,7 @@ interface ProjectState {
   clearStreamBuffer: () => void;
 
   // --- Swarm log ---
+  appendAgentLog: (entry: AgentLogEntry) => void;
   appendAgentStatus: (status: string) => void;
   clearAgentLog: () => void;
 
@@ -182,14 +190,15 @@ export const useProjectStore = create<ProjectState>()((set, get) => ({
 
   // --- Swarm log ---
 
+  appendAgentLog: (entry) =>
+    set((s) => {
+      const next = [...s.agentLog, entry];
+      // Keep log bounded at 200 entries.
+      return { agentLog: next.length > 200 ? next.slice(-200) : next };
+    }),
+
   appendAgentStatus: (status) =>
-    set((s) => ({
-      agentLog: [...s.agentLog, { status, time: Date.now() }],
-      // Keep log bounded at 200 entries
-      ...(s.agentLog.length >= 200
-        ? { agentLog: [...s.agentLog.slice(-199), { status, time: Date.now() }] }
-        : {}),
-    })),
+    get().appendAgentLog({ status, time: Date.now() }),
 
   clearAgentLog: () => set({ agentLog: [] }),
 

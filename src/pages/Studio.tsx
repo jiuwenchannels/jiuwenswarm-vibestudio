@@ -4,14 +4,17 @@
  * Desktop layout (≥ 768 px):
  *   [ChatPanel ~38%] | [SandpackPreview ~62%]
  *   With code:   [FileTree 176px] | [Chat] | [Sandpack with editor]
- *   With swarm:  [Chat] | [Sandpack] | [SwarmPanel 240px]
+ *
+ * Swarm activity is NOT a separate column — it renders inline inside the
+ * chat panel as a collapsible section, so the user's attention stays in the
+ * conversation while the agents work.
  *
  * Mobile layout (< 768 px):
- *   Full-width tab switcher: Chat | Preview | (Swarm)
+ *   Full-width tab switcher: Chat | Preview
  *
  * Phase 2 additions:
  * - ReconnectToast (2.12)
- * - SwarmPanel + toggle (2.5)
+ * - Swarm activity inline in the chat (2.5, redesigned)
  * - Chat export to Markdown (2.11)
  * - Mobile tab layout (2.10)
  * - Wrapped in ErrorBoundary (1.16)
@@ -21,7 +24,6 @@ import { useParams, Link } from "react-router-dom";
 import { ChatPanel } from "../components/Chat/ChatPanel";
 import { SandpackPreview } from "../components/Preview/SandpackPreview";
 import { FileTree } from "../components/FileExplorer/FileTree";
-import { SwarmPanel } from "../components/Swarm/SwarmPanel";
 import { ReconnectToast } from "../components/ReconnectToast";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 import { getClient, connectClient } from "../lib/client";
@@ -31,7 +33,7 @@ import { useProjectStore } from "../store/project";
 import { useThemeStore } from "../store/theme";
 
 // Mobile tab options.
-type MobileTab = "chat" | "preview" | "swarm";
+type MobileTab = "chat" | "preview";
 
 function StudioInner(): React.ReactNode {
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -43,7 +45,6 @@ function StudioInner(): React.ReactNode {
   const { isDark, toggle: toggleTheme } = useThemeStore();
 
   const [showCode, setShowCode] = useState(false);
-  const [showSwarm, setShowSwarm] = useState(false);
   const [mobileTab, setMobileTab] = useState<MobileTab>("chat");
 
   // Connect, activate session, and restore persisted files.
@@ -99,9 +100,7 @@ function StudioInner(): React.ReactNode {
   const hasFiles = Object.keys(files).length > 0;
   const hasMessages = messages.some((m) => m.role !== "status");
 
-  const mobileTabs: MobileTab[] = showSwarm
-    ? ["chat", "preview", "swarm"]
-    : ["chat", "preview"];
+  const mobileTabs: MobileTab[] = ["chat", "preview"];
 
   return (
     <div className="h-screen flex flex-col bg-vs-bg overflow-hidden">
@@ -171,25 +170,6 @@ function StudioInner(): React.ReactNode {
             </button>
           )}
 
-          {/* Swarm panel toggle */}
-          <button
-            onClick={() => {
-              // If closing Swarm while the mobile "swarm" tab is active,
-              // fall back to "chat" so the user isn't left on a blank tab.
-              if (showSwarm && mobileTab === "swarm") setMobileTab("chat");
-              setShowSwarm((v) => !v);
-            }}
-            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs
-                        transition-colors border
-                        ${showSwarm
-                          ? "bg-brand-900 border-brand-700 text-brand-300"
-                          : "bg-vs-raised border-vs-border text-vs-muted hover:text-vs-text hover:bg-vs-border"
-                        }`}
-            title={showSwarm ? "Hide swarm activity" : "Show swarm activity"}
-          >
-            ⚡ Swarm
-          </button>
-
           {/* Code toggle */}
           <button
             onClick={() => setShowCode((v) => !v)}
@@ -249,12 +229,6 @@ function StudioInner(): React.ReactNode {
         <div className="flex-1 overflow-hidden min-w-0">
           <SandpackPreview showEditor={showCode} />
         </div>
-
-        {showSwarm && (
-          <div className="w-60 shrink-0">
-            <SwarmPanel />
-          </div>
-        )}
       </div>
 
       {/* ── Mobile layout (< md) ──────────────────────────── */}
@@ -265,11 +239,6 @@ function StudioInner(): React.ReactNode {
         <div className={`h-full ${mobileTab === "preview" ? "block" : "hidden"}`}>
           <SandpackPreview showEditor={showCode} />
         </div>
-        {showSwarm && (
-          <div className={`h-full ${mobileTab === "swarm" ? "block" : "hidden"}`}>
-            <SwarmPanel />
-          </div>
-        )}
       </div>
     </div>
   );

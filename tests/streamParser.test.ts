@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   parseGenerationResult,
+  collapseFileBlocks,
   buildAgentSystemPrefix,
   type FileDelta,
 } from "../src/lib/streamParser";
@@ -88,6 +89,42 @@ Done.
     const result = parseGenerationResult(raw);
     expect(result.deltas[0].content).toContain("# Title");
     expect(result.deltas[0].content).toContain("Some `code`.");
+  });
+});
+
+describe("collapseFileBlocks", () => {
+  it("replaces a file block with a compact marker line", () => {
+    const raw = `@@FILE: src/Button.tsx\n\`\`\`tsx\nconst x = 1;\n\`\`\`\n@@END_FILE`;
+    expect(collapseFileBlocks(raw)).toBe("▸ src/Button.tsx");
+  });
+
+  it("keeps prose and collapses multiple blocks", () => {
+    const raw = `Creating files:
+
+@@FILE: a.ts
+\`\`\`ts
+export const a = 1;
+\`\`\`
+@@END_FILE
+@@FILE: b.ts
+\`\`\`ts
+export const b = 2;
+\`\`\`
+@@END_FILE
+
+Done.`;
+    const collapsed = collapseFileBlocks(raw);
+    expect(collapsed).toContain("Creating files:");
+    expect(collapsed).toContain("▸ a.ts");
+    expect(collapsed).toContain("▸ b.ts");
+    expect(collapsed).toContain("Done.");
+    expect(collapsed).not.toContain("@@FILE:");
+    expect(collapsed).not.toContain("const");
+  });
+
+  it("collapses @@DELETE directives", () => {
+    const raw = `@@DELETE: src/old.ts`;
+    expect(collapseFileBlocks(raw)).toBe("▸ delete src/old.ts");
   });
 });
 

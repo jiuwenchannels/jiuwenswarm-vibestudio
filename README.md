@@ -21,7 +21,8 @@ The browser side renders:
 - A **chat panel** with live streaming token output and quick-action buttons
 - A **Sandpack preview** — the generated app running live in the browser
 - A **file tree** and optional code editor
-- A **Swarm panel** showing real-time per-agent activity
+- **Swarm activity inline in the chat** — a collapsible, real-time per-agent
+  activity feed that opens while agents work and closes when they finish
 - A **template picker** with 6 ready-made starters
 - A **reconnect toast** that auto-dismisses when the WebSocket recovers
 
@@ -38,7 +39,7 @@ npm install
 
 # 2. Copy and fill in environment variables
 cp .env.example .env
-# set VITE_JIUWENSWARM_URL=ws://localhost:19000/v1/ws  (already the default)
+# set VITE_JIUWENSWARM_URL=ws://localhost:19000/ws  (already the default)
 
 # 3. Start the dev server
 npm run dev
@@ -100,8 +101,8 @@ jiuwenswarm-vibestudio/
 │   │   ├── FileExplorer/
 │   │   │   └── FileTree.tsx            # Nested file tree (toggleable)
 │   │   ├── Swarm/
-│   │   │   └── SwarmPanel.tsx          # Real-time agent activity log sidebar
-│   │   ├── TemplateModal.tsx           # Template picker overlay (6 starters)
+│   │   │   └── SwarmActivity.tsx        # Inline collapsible agent activity feed (in chat)
+│   │   ├── TemplateModal.tsx            # Template picker overlay (6 starters)
 │   │   ├── ReconnectToast.tsx          # Floating disconnection banner
 │   │   └── ErrorBoundary.tsx           # Render-error recovery screen
 │   │
@@ -191,7 +192,7 @@ Full roadmap: [`docs/ROADMAP.md`](docs/ROADMAP.md)
 file tree, dashboard, ZIP export, session restore, rewind, CI.
 
 **Phase 2** (in progress) — richer editing and deployment:
-- Done: templates, quick-actions, swarm panel, mobile layout, chat export, reconnect toast
+- Done: templates, quick-actions, inline swarm activity, mobile layout, chat export, reconnect toast
 - Remaining: Monaco editor (read-only + editable), WebContainers, Vercel/Netlify deploy, asset uploader
 
 **Phase 3** — collaboration and extensibility: real-time shared editing,
