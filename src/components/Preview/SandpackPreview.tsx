@@ -77,6 +77,53 @@ const PLACEHOLDER_FILES = {
   },
 };
 
+/** File paths Sandpack treats as a valid entry point. */
+const ENTRY_CANDIDATES = [
+  "/index.tsx",
+  "/index.jsx",
+  "/index.js",
+  "/src/index.tsx",
+  "/src/index.jsx",
+  "/src/index.js",
+  "/src/main.tsx",
+  "/src/main.jsx",
+  "/src/main.ts",
+  "/src/main.js",
+  "/main.tsx",
+  "/main.jsx",
+  "/main.ts",
+  "/main.js",
+];
+
+/**
+ * Ensure the project has an entry file Sandpack can mount. Generated apps are
+ * often a single `src/App.tsx` with no `index.tsx`/`main.tsx` — without one,
+ * Sandpack's react-ts template shows an error instead of the app. When no
+ * known entry exists, inject a minimal `/index.tsx` that renders App.
+ */
+function withEntry(
+  files: Record<string, string>,
+): Record<string, { code: string }> {
+  const sandpack = Object.fromEntries(
+    Object.entries(files).map(([path, code]) => [path, { code }]),
+  );
+
+  if (ENTRY_CANDIDATES.some((path) => path in sandpack)) return sandpack;
+
+  const appPath = "/src/App.tsx" in sandpack ? "/src/App.tsx" : "/App.tsx";
+  const importPath = appPath.startsWith("/src/") ? "./src/App" : "./App";
+
+  sandpack["/index.tsx"] = {
+    code: `import React from "react";
+import { createRoot } from "react-dom/client";
+import App from "${importPath}";
+
+createRoot(document.getElementById("root")!).render(<App />);`,
+  };
+
+  return sandpack;
+}
+
 export function SandpackPreview({
   showEditor = false,
   editorHeight = 320,
@@ -89,15 +136,16 @@ export function SandpackPreview({
 
   const hasFiles = Object.keys(files).length > 0;
 
-  const sandpackFiles =
+  const sandpackFiles = withEntry(
     hasFiles
       ? Object.fromEntries(
           Object.entries(files).map(([path, code]) => [
             path.startsWith("/") ? path : `/${path}`,
-            { code },
+            code,
           ]),
         )
-      : PLACEHOLDER_FILES;
+      : { "/App.tsx": PLACEHOLDER_FILES["/App.tsx"].code },
+  );
 
   return (
     <div className="relative h-full">

@@ -59,7 +59,7 @@ interface PendingRequest {
 interface ActiveStream {
   requestId: string;
   push: (event: StreamEvent) => void;
-  finish: (err?: Error) => void;
+  finish: (err?: Error, finalText?: string) => void;
   onReasoning: (text: string) => void;
   /** True once any text delta has been received for this stream. */
   receivedDelta: boolean;
@@ -352,8 +352,15 @@ export class RpcClient {
       buffer.push(event);
       notify?.();
     };
-    const finish = (err?: Error): void => {
+    const finish = (err?: Error, finalText?: string): void => {
+      // Idempotent: several frames can signal completion (chat.final,
+      // processing_status), but only one done event should reach the consumer.
+      // The done event carries the authoritative full response text when the
+      // final frame provides it (some gateways stream only a tail as deltas
+      // and deliver the complete content on the completion frame).
+      if (done) return;
       emitReasoning();
+      if (!err) buffer.push({ kind: "done", text: finalText });
       done = true;
       error = err ?? null;
       notify?.();
@@ -657,17 +664,15 @@ export class RpcClient {
       case "chat.final":
       case "chat.done":
       case "done": {
-        // Some servers deliver the complete response only on the final frame.
-        // If no text was streamed, fall back to the final frame's payload.
-        if (!stream.receivedDelta) {
-          const finalText =
-            extractText(payload) ??
-            (typeof payload["delta"] === "string" ? (payload["delta"] as string) : null);
-          if (finalText !== null && finalText.length > 0) {
-            stream.push({ kind: "delta", text: finalText });
-          }
-        }
-        stream.finish();
+        // The completion frame is authoritative for the full response. Some
+        // gateways stream only a partial tail as chat.delta and deliver the
+        // complete content (including any @@FILE blocks) here.
+        const finalText =
+          extractText(payload) ??
+          (typeof payload["delta"] === "string"
+            ? (payload["delta"] as string)
+            : undefined);
+        stream.finish(undefined, finalText);
         break;
       }
       case "chat.error": {

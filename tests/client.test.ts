@@ -69,7 +69,7 @@ function startStream(client: RpcClient): AsyncGenerator<
 }
 
 describe("RpcClient inbound frames", () => {
-  it("captures the full response text from a final frame", async () => {
+  it("captures the full response text on the done event from a final frame", async () => {
     const client = await connectClient();
     const iter = startStream(client);
     const pending = iter.next(); // starts stream + sends chat.send
@@ -77,25 +77,29 @@ describe("RpcClient inbound frames", () => {
     const text = "@@FILE: src/App.tsx\n```tsx\nconst x = 1;\n```\n@@END_FILE";
     lastSocket().emitRaw({ type: "event", event: "chat.final", payload: { text } });
 
-    const first = await pending;
-    expect(first.value).toEqual({ kind: "delta", text });
-    const done = await iter.next();
-    expect(done.done).toBe(true);
+    const evt = (await pending).value as { kind: string; text?: string };
+    expect(evt.kind).toBe("done");
+    expect(evt.text).toBe(text);
+    const finished = await iter.next();
+    expect(finished.done).toBe(true);
   });
 
-  it("does not duplicate text when deltas were already streamed", async () => {
+  it("prefers the final frame's text over streamed deltas", async () => {
     const client = await connectClient();
     const iter = startStream(client);
 
     let pending = iter.next();
-    lastSocket().emitRaw({ type: "event", event: "chat.delta", payload: { text: "part1" } });
-    expect((await pending).value).toEqual({ kind: "delta", text: "part1" });
+    lastSocket().emitRaw({ type: "event", event: "chat.delta", payload: { text: "tail…" } });
+    expect((await pending).value).toEqual({ kind: "delta", text: "tail…" });
 
-    // Final frame arrives with the same content — it must NOT be emitted again.
+    // The gateway streams only a tail as deltas but the full response arrives
+    // on the completion frame — the done event must carry it.
     pending = iter.next();
-    lastSocket().emitRaw({ type: "event", event: "chat.final", payload: { text: "part1" } });
-    const done = await pending;
-    expect(done.done).toBe(true);
+    const full = "@@FILE: src/App.tsx\n```tsx\nconst x = 1;\n```\n@@END_FILE";
+    lastSocket().emitRaw({ type: "event", event: "chat.final", payload: { content: full } });
+    const doneEvent = (await pending).value as { kind: string; text?: string };
+    expect(doneEvent.kind).toBe("done");
+    expect(doneEvent.text).toBe(full);
   });
 
   it("handles raw legacy { type: 'token' } frames", async () => {
@@ -164,8 +168,8 @@ describe("RpcClient inbound frames", () => {
       event: "chat.processing_status",
       payload: { is_complete: true },
     });
-    const done = await pending;
-    expect(done.done).toBe(true);
+    const doneEvent = await pending;
+    expect(doneEvent.value).toEqual({ kind: "done" });
   });
 
   it("routes reasoning text into a reasoning event", async () => {
@@ -183,6 +187,7 @@ describe("RpcClient inbound frames", () => {
     const evt = (await pending).value as { kind: string; text: string };
     expect(evt.kind).toBe("reasoning");
     expect(evt.text).toContain("thinking hard");
-    await iter.next(); // consumes the trailing done
+    const doneEvent = await iter.next();
+    expect(doneEvent.value).toEqual({ kind: "done" });
   });
 });

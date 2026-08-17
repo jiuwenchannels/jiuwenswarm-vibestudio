@@ -151,10 +151,13 @@ export function ChatPanel(): React.ReactNode {
                 setGenerating(false);
                 break;
               }
-              const { deltas, prose } = parseGenerationResult(accumulated);
+              // The done event may carry the authoritative full response
+              // (deltas are sometimes only a tail); prefer it over accumulated.
+              const fullText = event.text ?? accumulated;
+              const { deltas, prose } = parseGenerationResult(fullText);
               // eslint-disable-next-line no-console
               console.info("[VibeStudio] generation finished", {
-                accumulatedLen: accumulated.length,
+                accumulatedLen: fullText.length,
                 deltas: deltas.length,
                 proseLen: prose.length,
               });
@@ -169,7 +172,7 @@ export function ChatPanel(): React.ReactNode {
               const summary =
                 deltas.length > 0
                   ? `Generated ${deltas.length} file${deltas.length === 1 ? "" : "s"}.`
-                  : accumulated;
+                  : fullText;
               const fallback =
                 "The swarm finished without producing any files or text. Please try again.";
               updateLastAssistantMessage((m) => ({
