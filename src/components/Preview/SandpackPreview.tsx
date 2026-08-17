@@ -18,7 +18,7 @@ import {
   SandpackCodeEditor,
   useSandpack,
 } from "@codesandbox/sandpack-react";
-import { useEffect } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useProjectStore } from "../../store/project";
 import { useThemeStore } from "../../store/theme";
 import { Resizer } from "../Resizer";
@@ -37,16 +37,94 @@ interface Props {
  * Bridges the project store's activeFile (driven by the FileTree) into
  * Sandpack's internal store, so clicking a file in the tree opens it in the
  * editor. Sandpack keys are rooted with a leading slash.
+ *
+ * The `sandpack` object identity changes on every Sandpack render, so it is
+ * kept in a ref rather than the dependency array — otherwise the effect would
+ * re-run and call setActiveFile forever.
  */
 function SyncActiveFile(): null {
   const activeFile = useProjectStore((s) => s.activeFile);
   const { sandpack } = useSandpack();
+  const sandpackRef = useRef(sandpack);
+  sandpackRef.current = sandpack;
 
   useEffect(() => {
     if (!activeFile) return;
+    const sp = sandpackRef.current;
     const key = activeFile.startsWith("/") ? activeFile : `/${activeFile}`;
-    if (key in sandpack.files) sandpack.setActiveFile(key);
-  }, [activeFile, sandpack]);
+    if (sp.activeFile !== key && key in sp.files) sp.setActiveFile(key);
+  }, [activeFile]);
+
+  return null;
+}
+
+const STATUS_LABELS: Record<string, string> = {
+  initializing: "Starting…",
+  "installing-dependencies": "Installing dependencies…",
+  transpiling: "Transpiling…",
+  evaluating: "Running…",
+  idle: "Idle",
+  done: "",
+};
+
+/**
+ * Surfaces Sandpack bundler state: a friendly loading pill while compiling,
+ * and a clear error card instead of a silent white screen when the preview
+ * fails to load (commonly a network issue reaching CodeSandbox).
+ */
+function PreviewStatusOverlay({ hidePreview }: { hidePreview: boolean }): ReactNode | null {
+  const { sandpack } = useSandpack();
+  const [showSlow, setShowSlow] = useState(false);
+
+  // If the bundler hasn't finished after a while, surface a network hint
+  // instead of an endless spinner / white screen.
+  useEffect(() => {
+    const t = setTimeout(() => setShowSlow(true), 20000);
+    return () => clearTimeout(t);
+  }, []);
+
+  if (sandpack.error) {
+    return (
+      <div className="absolute inset-0 z-10 flex items-center justify-center bg-vs-bg/80 p-6">
+        <div className="max-w-md text-center text-sm">
+          <p className="font-semibold text-vs-text mb-1">Preview failed to load</p>
+          <p className="text-vs-muted break-words">{sandpack.error.message}</p>
+          <p className="mt-3 text-xs text-vs-faint">
+            Usually a network issue reaching CodeSandbox's bundler — the code in
+            the editor is still saved.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!hidePreview && sandpack.status && sandpack.status !== "done" && sandpack.status !== "idle") {
+    if (showSlow) {
+      return (
+        <div className="absolute inset-0 z-10 flex items-center justify-center bg-vs-bg/80 p-6">
+          <div className="max-w-md text-center text-sm">
+            <p className="font-semibold text-vs-text mb-1">Preview is taking a long time…</p>
+            <p className="text-vs-muted">
+              The bundler needs to reach CodeSandbox to fetch React. On this
+              network it seems blocked — the code is fine, but the live preview
+              can't start.
+            </p>
+            <p className="mt-3 text-xs text-vs-faint">
+              Try the ↓ ZIP download to run the project locally.
+            </p>
+          </div>
+        </div>
+      );
+    }
+    return (
+      <div className="absolute top-3 right-3 z-10 pointer-events-none flex items-center gap-2
+                      px-3 py-1.5 rounded-full bg-vs-surface/90 border border-vs-border
+                      shadow text-xs text-vs-muted">
+        <span className="animate-spin w-3 h-3 border border-brand-500 border-t-transparent rounded-full" />
+        {STATUS_LABELS[sandpack.status] ?? sandpack.status}
+      </div>
+    );
+  }
 
   return null;
 }
@@ -147,6 +225,10 @@ export function SandpackPreview({
       : { "/App.tsx": PLACEHOLDER_FILES["/App.tsx"].code },
   );
 
+  // Only show the project's own files (plus the injected entry) in the editor —
+  // the react-ts template otherwise merges in a default Hello-world App.tsx.
+  const visibleFiles = Object.keys(sandpackFiles);
+
   return (
     <div className="relative h-full">
       {/* First generation — block the placeholder while the app is built */}
@@ -171,8 +253,10 @@ export function SandpackPreview({
         files={sandpackFiles}
         template="react-ts"
         theme={isDark ? "dark" : "light"}
+        options={{ visibleFiles }}
       >
         <SyncActiveFile />
+        <PreviewStatusOverlay hidePreview={hidePreview} />
         {hidePreview ? (
           <div className="h-full">
             <SandpackCodeEditor

@@ -27,7 +27,8 @@ export function Dashboard(): React.ReactNode {
   const { resetProject, setInitialPrompt } = useProjectStore();
   const { isDark, toggle: toggleTheme } = useThemeStore();
 
-  const [title, setTitle] = useState("");
+  const [prompt, setPrompt] = useState("");
+  const [projectName, setProjectName] = useState("");
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showTemplates, setShowTemplates] = useState(false);
@@ -67,29 +68,39 @@ export function Dashboard(): React.ReactNode {
     if (e.key === "Escape") setRenamingId(null);
   }, [commitRename]);
 
+  /**
+   * Create a project and start building. The main field is a real prompt:
+   * whatever the user types is handed to the swarm immediately (ChatPanel
+   * auto-sends initialPrompt on mount). The optional name field only controls
+   * the session title — it never replaces the prompt.
+   */
   const createProject = useCallback(
     async (e: FormEvent): Promise<void> => {
       e.preventDefault();
-      const projectTitle = title.trim() || "Untitled project";
+      const promptText = prompt.trim();
+      const name =
+        projectName.trim() || promptText.slice(0, 40) || "Untitled project";
       setCreating(true);
       setError(null);
       try {
         await connectClient();
         const client = getClient();
-        const session = await client.sessions.create(projectTitle);
-        addProject(session);
+        const session = await client.sessions.create(name);
+        addProject(session, promptText.slice(0, 120) || undefined);
         setActive(session.id);
         client.sessions.setActive(session.id);
         resetProject();
+        if (promptText) setInitialPrompt(promptText);
         navigate(`/studio/${session.id}`);
       } catch (err) {
         setError(`Could not create project: ${String(err)}`);
       } finally {
         setCreating(false);
-        setTitle("");
+        setPrompt("");
+        setProjectName("");
       }
     },
-    [title, addProject, setActive, resetProject, navigate],
+    [prompt, projectName, addProject, setActive, resetProject, setInitialPrompt, navigate],
   );
 
   /**
@@ -198,33 +209,45 @@ export function Dashboard(): React.ReactNode {
       <main className="flex-1 px-8 py-10 max-w-4xl mx-auto w-full">
         {/* New project form */}
         <section className="mb-10">
-          <h2 className="text-lg font-semibold mb-4">New project</h2>
-          <form onSubmit={(e) => { void createProject(e); }} className="flex gap-3">
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Project name (optional)"
-              className="flex-1 rounded-xl bg-vs-raised border border-vs-border px-4 py-3
-                         text-sm placeholder-vs-muted focus:outline-none focus:border-brand-500"
-            />
-            <button
-              type="button"
-              onClick={() => setShowTemplates(true)}
-              className="px-4 py-3 rounded-xl border border-vs-border bg-vs-raised
-                         text-sm text-vs-muted hover:text-vs-text hover:bg-vs-border
-                         transition-colors whitespace-nowrap"
-            >
-              Use template
-            </button>
-            <button
-              type="submit"
-              disabled={creating}
-              className="px-6 py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white
-                         text-sm font-medium disabled:opacity-50 transition-colors"
-            >
-              {creating ? "Creating…" : "Create"}
-            </button>
+          <h2 className="text-lg font-semibold mb-4">Build something new</h2>
+          <form onSubmit={(e) => { void createProject(e); }} className="flex gap-3 items-start">
+            <div className="flex-1 space-y-2">
+              <textarea
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                rows={2}
+                placeholder="Describe what you want to build — the swarm starts immediately. e.g. Build a modern to-do app with drag-and-drop and dark mode"
+                className="w-full rounded-xl bg-vs-raised border border-vs-border px-4 py-3
+                           text-sm placeholder-vs-muted focus:outline-none focus:border-brand-500 resize-y"
+              />
+              <input
+                type="text"
+                value={projectName}
+                onChange={(e) => setProjectName(e.target.value)}
+                placeholder="Project name (optional)"
+                className="w-full rounded-xl bg-vs-raised border border-vs-border px-4 py-2
+                           text-sm placeholder-vs-muted focus:outline-none focus:border-brand-500"
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={() => setShowTemplates(true)}
+                className="px-4 py-2.5 rounded-xl border border-vs-border bg-vs-raised
+                           text-sm text-vs-muted hover:text-vs-text hover:bg-vs-border
+                           transition-colors whitespace-nowrap"
+              >
+                Use template
+              </button>
+              <button
+                type="submit"
+                disabled={creating}
+                className="px-6 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white
+                           text-sm font-medium disabled:opacity-50 transition-colors"
+              >
+                {creating ? "Creating…" : "Create & build"}
+              </button>
+            </div>
           </form>
 
           {error && (
@@ -234,7 +257,7 @@ export function Dashboard(): React.ReactNode {
           {/* Quick-start ideas */}
           <div className="mt-6">
             <h3 className="text-sm font-medium text-vs-muted mb-2">
-              Or quick-start from an idea — agents start building immediately
+              Or start from a ready-made idea
             </h3>
             <div className="flex flex-wrap gap-2">
               {STARTER_PROMPTS.map((prompt) => (
