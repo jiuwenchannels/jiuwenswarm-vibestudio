@@ -351,21 +351,29 @@ export function ChatPanel(): React.ReactNode {
             <span className="text-[10px] text-vs-faint pl-1.5 select-none">
               Enter to send · Shift+Enter for a new line
             </span>
-            <button
-              type="submit"
-              disabled={!activeSessionId || !input.trim() || generation.isGenerating}
-              className="px-4 py-2 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700
-                         hover:from-brand-600 hover:to-brand-700 text-white text-sm font-medium
-                         shadow-sm shadow-brand-500/30 disabled:opacity-40 disabled:cursor-not-allowed
-                         transition-all disabled:shadow-none"
-              title={
-                generation.isGenerating
-                  ? "Wait for the current generation to finish"
-                  : "Send message"
-              }
-            >
-              {generation.isGenerating ? "Working…" : "Send"}
-            </button>
+            {generation.isGenerating ? (
+              <button
+                type="button"
+                onClick={() => getClient().interrupt()}
+                className="px-4 py-2 rounded-xl bg-rose-500/15 border border-rose-500/40
+                           text-rose-300 hover:bg-rose-500/25 text-sm font-medium transition-colors"
+                title="Stop the current generation"
+              >
+                ■ Stop
+              </button>
+            ) : (
+              <button
+                type="submit"
+                disabled={!activeSessionId || !input.trim()}
+                className="px-4 py-2 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700
+                           hover:from-brand-600 hover:to-brand-700 text-white text-sm font-medium
+                           shadow-sm shadow-brand-500/30 disabled:opacity-40 disabled:cursor-not-allowed
+                           transition-all disabled:shadow-none"
+                title="Send message"
+              >
+                Send
+              </button>
+            )}
           </div>
         </div>
       </form>

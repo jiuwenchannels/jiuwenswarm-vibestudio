@@ -19,6 +19,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useProjectStore } from "../../store/project";
 import { useThemeStore } from "../../store/theme";
 import { Resizer } from "../Resizer";
+import { FileTree } from "../FileExplorer/FileTree";
 
 interface Props {
   showEditor?: boolean;
@@ -290,13 +291,7 @@ export function SandpackPreview({
       >
         <SyncActiveFile />
         {hidePreview ? (
-          <div className="h-full">
-            <SandpackCodeEditor
-              showLineNumbers
-              showTabs
-              style={{ height: "100%" }}
-            />
-          </div>
+          <CodeEditorPanel />
         ) : (
           <div className="flex flex-col h-full">
             <div className="flex-1 min-h-0">
@@ -309,17 +304,34 @@ export function SandpackPreview({
                   className="shrink-0 border-t border-vs-border bg-vs-surface"
                   style={{ height: editorHeight }}
                 >
-                  <SandpackCodeEditor
-                    showLineNumbers
-                    showTabs
-                    style={{ height: "100%" }}
-                  />
+                  <CodeEditorPanel />
                 </div>
               </>
             )}
           </div>
         )}
       </SandpackProvider>
+    </div>
+  );
+}
+
+/**
+ * The code drawer combines a file explorer and the code editor side-by-side
+ * (like VS Code), so a single "Code" toggle gives both navigation and editing.
+ */
+function CodeEditorPanel(): ReactNode {
+  return (
+    <div className="flex h-full">
+      <div className="w-44 shrink-0 border-r border-vs-border bg-vs-surface">
+        <FileTree />
+      </div>
+      <div className="flex-1 min-w-0">
+        <SandpackCodeEditor
+          showLineNumbers
+          showTabs
+          style={{ height: "100%" }}
+        />
+      </div>
     </div>
   );
 }

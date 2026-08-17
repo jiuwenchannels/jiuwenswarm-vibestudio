@@ -58,7 +58,7 @@ When you open a project you enter the Studio.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
-│  ← Dashboard  |  Project name      Files  </>   ↩ Undo  ↓ ZIP  ↓ Chat    │
+│  V  Dashboard / Project name      </> Code  ↩ Undo  ↓ ZIP  ↓ Chat  ✕     │
 ├───────────────┬──────────────────────────────┬───────────────────────────┤
 │  Chat panel   │  ⇽ resizable gap             │  Live preview (hero)      │
 │  (prompts,    │                              │  ┌───────────────────────┐│
@@ -69,13 +69,14 @@ When you open a project you enter the Studio.
 ```
 
 The workspace is organised around the **preview**: it always gets the remaining
-space. The **chat** is the driver on the left (resizable), and **Files** and
-**Code** are drawers you toggle from the toolbar.
+space. The **chat** is the driver on the left (resizable), and **Code** is a
+single drawer you toggle from the toolbar.
 
 ### Chat panel
 
 Type your request in the text box at the bottom and press **Enter** (or
-**Shift+Enter** for a new line) or click **Send**.
+**Shift+Enter** for a new line) or click **Send**. While the swarm is working,
+the Send button becomes **Stop** so you can cancel a generation.
 
 The panel shows:
 - Your messages (right-aligned, blue).
@@ -88,18 +89,21 @@ The panel shows:
 
 The right side shows your app running live in the browser as soon as the first
 generation completes. It automatically refreshes whenever new files are
-generated. The preview uses the same code that appears in the code editor.
+generated. The preview bundles locally with esbuild, so it does not need the
+internet.
 
-### Files and code drawers
+### Code drawer
 
-- Click **Files** to open the file tree on the left.
-- Clicking a file opens it in the code editor — and if the editor is closed,
-  it opens automatically so you can read the file.
-- Click **`</>`** to show or hide the **code drawer**, a resizable panel at the
-  bottom of the preview. Drag its handle up to give code more room — the
-  preview keeps the top of the space.
+- Click **`</> Code`** to show or hide the **code drawer**, a resizable panel at
+  the bottom of the preview. It shows the **file explorer** and the **code
+  editor** side by side.
+- Clicking a file in the tree opens it in the editor.
+- Drag the drawer's handle up to give code more room — the preview keeps the
+  top of the space.
 - Drag the handle between the chat and preview to resize the chat column. Your
   panel sizes are remembered between visits.
+
+Use **✕ Clear** in the toolbar to empty the conversation view.
 
 ---
 

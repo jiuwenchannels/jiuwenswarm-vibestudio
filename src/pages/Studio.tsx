@@ -25,7 +25,6 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { ChatPanel } from "../components/Chat/ChatPanel";
 import { SandpackPreview } from "../components/Preview/SandpackPreview";
-import { FileTree } from "../components/FileExplorer/FileTree";
 import { Resizer } from "../components/Resizer";
 import { ReconnectToast } from "../components/ReconnectToast";
 import { ErrorBoundary } from "../components/ErrorBoundary";
@@ -54,13 +53,13 @@ function StudioInner(): React.ReactNode {
   const {
     generation, rewindStack, files, messages,
     loadFiles, popRewindSnapshot, restoreSnapshot,
+    clearChatMessages, clearAgentLog,
   } = useProjectStore();
   const { isDark, toggle: toggleTheme } = useThemeStore();
   const {
     chatWidth, codeHeight, setChatWidth, setCodeHeight,
   } = useLayoutStore();
 
-  const [showFiles, setShowFiles] = useState(false);
   const [showCode, setShowCode] = useState(false);
   const [mobileTab, setMobileTab] = useState<MobileTab>("chat");
 
@@ -127,8 +126,10 @@ function StudioInner(): React.ReactNode {
     setCodeHeight(clamp(codeHeight + delta, CODE_HEIGHT_MIN, CODE_HEIGHT_MAX));
   };
 
-  // Clicking a file opens it in the code drawer.
-  const handleFileSelect = (): void => setShowCode(true);
+  const handleClearChat = (): void => {
+    clearChatMessages();
+    clearAgentLog();
+  };
 
   return (
     <div className="h-screen flex flex-col bg-vs-bg overflow-hidden">
@@ -165,23 +166,7 @@ function StudioInner(): React.ReactNode {
             </span>
           )}
 
-          {/* Files drawer toggle */}
-          <button
-            onClick={() => setShowFiles((v) => !v)}
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium
-                        transition-all border
-                        ${showFiles
-                          ? "bg-brand-500/15 border-brand-500/40 text-brand-300"
-                          : "bg-vs-raised border-vs-border text-vs-muted hover:text-vs-text hover:border-vs-border-light"}`}
-            title={showFiles ? "Hide file explorer" : "Show file explorer"}
-          >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
-            </svg>
-            Files
-          </button>
-
-          {/* Code drawer toggle */}
+          {/* Code drawer toggle (explorer + editor) */}
           <button
             onClick={() => setShowCode((v) => !v)}
             className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium
@@ -189,9 +174,9 @@ function StudioInner(): React.ReactNode {
                         ${showCode
                           ? "bg-brand-500/15 border-brand-500/40 text-brand-300"
                           : "bg-vs-raised border-vs-border text-vs-muted hover:text-vs-text hover:border-vs-border-light"}`}
-            title={showCode ? "Hide code editor" : "Show code editor"}
+            title={showCode ? "Hide code" : "Show code (files + editor)"}
           >
-            {"</>"}
+            {"</>"} Code
           </button>
 
           {/* Rewind */}
@@ -233,6 +218,19 @@ function StudioInner(): React.ReactNode {
             </button>
           )}
 
+          {/* Clear chat */}
+          {hasMessages && (
+            <button
+              onClick={handleClearChat}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium
+                         bg-vs-raised hover:bg-vs-border text-vs-muted hover:text-vs-text
+                         transition-colors border border-vs-border hover:border-vs-border-light"
+              title="Clear the conversation view"
+            >
+              ✕ Clear
+            </button>
+          )}
+
           {/* Theme toggle */}
           <button
             onClick={toggleTheme}
@@ -265,12 +263,6 @@ function StudioInner(): React.ReactNode {
 
       {/* ── Desktop layout (≥ md) ─────────────────────────── */}
       <div className="hidden md:flex flex-1 overflow-hidden">
-        {showFiles && (
-          <div className="w-56 shrink-0 border-r border-vs-border">
-            <FileTree onSelect={handleFileSelect} />
-          </div>
-        )}
-
         <div
           style={{ width: chatWidth }}
           className="shrink-0 border-r border-vs-border min-w-0"
@@ -297,13 +289,8 @@ function StudioInner(): React.ReactNode {
         <div className={`h-full ${mobileTab === "preview" ? "block" : "hidden"}`}>
           <SandpackPreview />
         </div>
-        <div className={`h-full flex flex-col ${mobileTab === "code" ? "block" : "hidden"}`}>
-          <div className="shrink-0 max-h-48 overflow-y-auto border-b border-vs-border">
-            <FileTree onSelect={() => setMobileTab("code")} />
-          </div>
-          <div className="flex-1 min-h-0">
-            <SandpackPreview showEditor hidePreview />
-          </div>
+        <div className={`h-full ${mobileTab === "code" ? "block" : "hidden"}`}>
+          <SandpackPreview showEditor hidePreview />
         </div>
       </div>
     </div>

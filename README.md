@@ -19,10 +19,10 @@ The agent side runs on the server:
 
 The browser side renders:
 - A **chat panel** with live streaming token output and quick-action buttons
-- A **Sandpack preview** — the generated app running live in the browser; the
-  hero surface that always gets the remaining space
-- **Files** and **Code** drawers — a file tree that opens files in a resizable
-  code drawer beneath the preview (nothing squeezes the preview sideways)
+- A **live preview** — the generated app, bundled offline by the dev server
+  (esbuild) so it works without reaching CodeSandbox
+- A **Code drawer** — a file explorer and editor side-by-side beneath the
+  preview (nothing squeezes the preview sideways); clicking a file opens it
 - **Swarm activity inline in the chat** — a collapsible, real-time per-agent
   activity feed that opens while agents work and closes when they finish
 - A **template picker** with 6 ready-made starters

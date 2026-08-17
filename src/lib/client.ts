@@ -436,6 +436,20 @@ export class RpcClient {
     await this._request("hitl.answer", { request_id: requestId, answers });
   }
 
+  /** Best-effort stop of the current generation. */
+  interrupt(): void {
+    this._send({
+      type: "req",
+      id: generateId(),
+      channel_id: CHANNEL_ID,
+      method: "chat.interrupt",
+      params: {},
+    });
+    // End the local stream so the UI stops waiting even if the gateway
+    // ignores the interrupt.
+    this._stream?.finish();
+  }
+
   // ---------------------------------------------------------------------------
   // Inbound message handling
   // ---------------------------------------------------------------------------
