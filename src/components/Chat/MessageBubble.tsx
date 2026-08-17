@@ -47,13 +47,13 @@ export function MessageBubble({ message, onAnswer }: Props): ReactNode {
   const isUser = role === "user";
 
   return (
-    <div className={`flex ${isUser ? "justify-end" : "justify-start"} px-4 py-2`}>
+    <div className={`flex ${isUser ? "justify-end" : "justify-start"} px-4 py-1.5`}>
       <div
         className={[
-          "max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap break-words",
+          "max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap break-words shadow-sm",
           isUser
-            ? "bg-brand-600 text-white rounded-br-sm"
-            : "bg-vs-raised text-vs-text rounded-bl-sm",
+            ? "bg-gradient-to-br from-brand-500 to-brand-700 text-white rounded-br-md"
+            : "bg-vs-raised text-vs-text rounded-bl-md border border-vs-border-light",
         ].join(" ")}
       >
         {content}

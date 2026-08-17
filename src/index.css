@@ -10,26 +10,68 @@
 
 :root {
   /* Light theme */
-  --vs-bg:           248 250 252;   /* slate-50   — deepest background        */
-  --vs-surface:      255 255 255;   /* white      — panel / card surface       */
-  --vs-raised:       241 245 249;   /* slate-100  — hover, button backgrounds  */
-  --vs-border:       203 213 225;   /* slate-300  — primary borders            */
-  --vs-border-light: 226 232 240;   /* slate-200  — subtle dividers            */
-  --vs-text:          15  23  42;   /* slate-900  — primary text               */
-  --vs-muted:        100 116 139;   /* slate-500  — secondary / placeholder    */
-  --vs-faint:        148 163 184;   /* slate-400  — disabled / hint text       */
+  --vs-bg:           247 249 252;   /* near-white page background          */
+  --vs-surface:      255 255 255;   /* white      — panel / card surface   */
+  --vs-raised:       243 245 249;   /* slate-100  — hover, button bg       */
+  --vs-border:       226 231 239;   /* slate-200  — primary borders        */
+  --vs-border-light: 238 241 246;   /* slate-100  — subtle dividers        */
+  --vs-text:          17  24  39;   /* slate-900  — primary text           */
+  --vs-muted:        100 116 139;   /* slate-500  — secondary / placeholder */
+  --vs-faint:        148 163 184;   /* slate-400  — disabled / hint text   */
 }
 
 .dark {
   /* Dark theme */
-  --vs-bg:             3   7  18;   /* gray-950   — deepest background         */
-  --vs-surface:       17  24  39;   /* gray-900   — panel / card surface       */
-  --vs-raised:        31  41  55;   /* gray-800   — hover, button backgrounds  */
-  --vs-border:        31  41  55;   /* gray-800   — primary borders            */
-  --vs-border-light:  55  65  81;   /* gray-700   — subtle dividers            */
-  --vs-text:         243 244 246;   /* gray-100   — primary text               */
-  --vs-muted:        107 114 128;   /* gray-500   — secondary / placeholder    */
-  --vs-faint:         75  85  99;   /* gray-600   — disabled / hint text       */
+  --vs-bg:            11  13  19;   /* deep near-black, faint blue tint    */
+  --vs-surface:       17  21  30;   /* panel surface                       */
+  --vs-raised:        26  32  44;   /* hover / buttons / secondary surface */
+  --vs-border:        37  45  61;   /* primary borders                     */
+  --vs-border-light:  28  34  48;   /* subtle dividers                     */
+  --vs-text:         236 239 246;   /* primary text                        */
+  --vs-muted:        148 158 178;   /* secondary text                      */
+  --vs-faint:        105 115 136;   /* disabled / hint text                */
+}
+
+/* -------------------------------------------------------------------------
+   Base refinements
+   ------------------------------------------------------------------------- */
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: rgb(76 110 245 / 0.25);
+}
+
+/* Thin, theme-aware scrollbars everywhere */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(var(--vs-border) / 0.9) transparent;
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-thumb {
+  background: rgb(var(--vs-border));
+  border-radius: 9999px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background-color: rgb(var(--vs-muted));
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 /* Sandpack takes the full height of its container */

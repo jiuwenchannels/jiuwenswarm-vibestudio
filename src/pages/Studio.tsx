@@ -136,16 +136,22 @@ function StudioInner(): React.ReactNode {
       <ReconnectToast />
 
       {/* Top bar */}
-      <header className="flex items-center justify-between px-4 py-2.5 border-b border-vs-border bg-vs-surface shrink-0 gap-2">
+      <header className="flex items-center justify-between px-4 py-2.5 border-b border-vs-border bg-vs-surface shrink-0 gap-3">
         <div className="flex items-center gap-3 min-w-0">
           <Link
             to="/"
-            className="text-xs text-vs-muted hover:text-vs-text transition-colors shrink-0"
+            className="shrink-0 group flex items-center gap-2"
+            title="Back to dashboard"
           >
-            ← Dashboard
+            <span className="w-7 h-7 rounded-lg bg-gradient-to-br from-brand-500 to-violet-500 flex items-center justify-center text-white text-xs font-bold shadow-sm shadow-brand-500/30">
+              V
+            </span>
+            <span className="hidden sm:block text-xs text-vs-muted group-hover:text-vs-text transition-colors">
+              Dashboard
+            </span>
           </Link>
-          <span className="text-vs-faint shrink-0">|</span>
-          <span className="text-sm font-medium text-vs-text truncate">
+          <span className="text-vs-faint shrink-0 select-none">/</span>
+          <span className="text-sm font-semibold text-vs-text truncate tracking-tight">
             {project?.title ?? sessionId ?? "Loading…"}
           </span>
         </div>
@@ -162,26 +168,27 @@ function StudioInner(): React.ReactNode {
           {/* Files drawer toggle */}
           <button
             onClick={() => setShowFiles((v) => !v)}
-            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs
-                        transition-colors border
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium
+                        transition-all border
                         ${showFiles
-                          ? "bg-brand-900 border-brand-700 text-brand-300"
-                          : "bg-vs-raised border-vs-border text-vs-muted hover:text-vs-text hover:bg-vs-border"
-                        }`}
+                          ? "bg-brand-500/15 border-brand-500/40 text-brand-300"
+                          : "bg-vs-raised border-vs-border text-vs-muted hover:text-vs-text hover:border-vs-border-light"}`}
             title={showFiles ? "Hide file explorer" : "Show file explorer"}
           >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+            </svg>
             Files
           </button>
 
           {/* Code drawer toggle */}
           <button
             onClick={() => setShowCode((v) => !v)}
-            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs
-                        transition-colors border
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium
+                        transition-all border
                         ${showCode
-                          ? "bg-brand-900 border-brand-700 text-brand-300"
-                          : "bg-vs-raised border-vs-border text-vs-muted hover:text-vs-text hover:bg-vs-border"
-                        }`}
+                          ? "bg-brand-500/15 border-brand-500/40 text-brand-300"
+                          : "bg-vs-raised border-vs-border text-vs-muted hover:text-vs-text hover:border-vs-border-light"}`}
             title={showCode ? "Hide code editor" : "Show code editor"}
           >
             {"</>"}
@@ -191,9 +198,9 @@ function StudioInner(): React.ReactNode {
           {rewindStack.length > 0 && !generation.isGenerating && (
             <button
               onClick={handleRewind}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium
                          bg-vs-raised hover:bg-vs-border text-vs-muted hover:text-vs-text
-                         transition-colors border border-vs-border"
+                         transition-colors border border-vs-border hover:border-vs-border-light"
               title="Undo last generation"
             >
               ↩ Undo
@@ -204,9 +211,9 @@ function StudioInner(): React.ReactNode {
           {hasFiles && (
             <button
               onClick={handleDownload}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium
                          bg-vs-raised hover:bg-vs-border text-vs-muted hover:text-vs-text
-                         transition-colors border border-vs-border"
+                         transition-colors border border-vs-border hover:border-vs-border-light"
               title="Download project as ZIP"
             >
               ↓ ZIP
@@ -217,9 +224,9 @@ function StudioInner(): React.ReactNode {
           {hasMessages && (
             <button
               onClick={handleExportChat}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium
                          bg-vs-raised hover:bg-vs-border text-vs-muted hover:text-vs-text
-                         transition-colors border border-vs-border"
+                         transition-colors border border-vs-border hover:border-vs-border-light"
               title="Export chat as Markdown"
             >
               ↓ Chat

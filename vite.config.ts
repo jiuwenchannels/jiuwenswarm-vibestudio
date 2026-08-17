@@ -73,8 +73,10 @@ function previewApiPlugin(): Plugin {
                 res.setHeader("Content-Type", "application/javascript");
                 res.end(code);
               } catch (err) {
+                // eslint-disable-next-line no-console
+                console.error("[preview] bundle error:", err);
                 res.statusCode = 500;
-                res.end(String(err));
+                res.end(String((err as Error).message ?? err));
               }
             })();
           });

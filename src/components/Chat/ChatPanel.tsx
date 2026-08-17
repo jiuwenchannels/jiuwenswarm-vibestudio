@@ -268,21 +268,30 @@ export function ChatPanel(): React.ReactNode {
 
   return (
     <div className="flex flex-col h-full bg-vs-surface">
-      {/* Subtle connection indicator */}
-      <div className="flex items-center gap-2 px-4 py-2 border-b border-vs-border text-xs text-vs-muted shrink-0">
-        <span className={`w-2 h-2 rounded-full ${connected ? "bg-green-500" : "bg-red-400"}`} />
-        {connected ? "Connected" : "Reconnecting…"}
+      {/* Connection indicator */}
+      <div className="flex items-center gap-2 px-4 py-2 border-b border-vs-border-light text-xs text-vs-muted shrink-0">
+        <span className={`w-1.5 h-1.5 rounded-full ${connected ? "bg-emerald-500" : "bg-rose-500"} ${connected ? "" : "animate-pulse"}`} />
+        <span className="truncate">{connected ? "Connected" : "Reconnecting…"}</span>
       </div>
 
       {/* Message list */}
-      <div className="flex-1 overflow-y-auto py-4 space-y-1">
+      <div className="flex-1 overflow-y-auto py-4 space-y-1.5">
         {messages.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-full text-vs-muted gap-3 px-8 text-center">
-            <p className="text-lg font-semibold text-vs-text">What do you want to build?</p>
-            <p className="text-sm">
-              Describe your app in plain language. JiuwenSwarm agents will write the code and
-              show you a live preview.
-            </p>
+          <div className="flex flex-col items-center justify-center h-full text-vs-muted gap-5 px-8 text-center">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-brand-500 to-violet-500 flex items-center justify-center shadow-lg shadow-brand-500/25">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-lg font-semibold text-vs-text tracking-tight">
+                What do you want to build?
+              </p>
+              <p className="text-sm mt-1.5 leading-relaxed">
+                Describe your app in plain language. The swarm writes the code
+                and shows a live preview.
+              </p>
+            </div>
           </div>
         )}
         {messages.map((msg) => (
@@ -294,16 +303,16 @@ export function ChatPanel(): React.ReactNode {
       {/* Inline swarm activity — same window as the chat it belongs to */}
       <SwarmActivity />
 
-      {/* Quick-action pills (Stage 2.2) */}
-      <div className="flex gap-2 px-4 pt-3 pb-1 shrink-0 flex-wrap">
+      {/* Quick-action pills */}
+      <div className="flex gap-1.5 px-4 pt-2.5 pb-1 shrink-0 flex-wrap">
         {QUICK_ACTIONS.map(({ label, prefix }) => (
           <button
             key={label}
             type="button"
             onClick={() => applyQuickAction(prefix)}
             disabled={!activeSessionId}
-            className="text-xs px-3 py-1 rounded-full border border-vs-border bg-vs-raised
-                       hover:bg-vs-border text-vs-muted hover:text-vs-text transition-colors
+            className="text-[11px] px-2.5 py-1 rounded-full border border-vs-border bg-vs-raised
+                       hover:border-brand-500/40 hover:text-vs-text text-vs-muted transition-colors
                        disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {label}
@@ -314,41 +323,51 @@ export function ChatPanel(): React.ReactNode {
       {/* Input */}
       <form
         onSubmit={(e) => { void handleSubmit(e); }}
-        className="border-t border-vs-border p-4 flex gap-3 shrink-0"
+        className="border-t border-vs-border p-3 shrink-0"
       >
-        <textarea
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              void handleSubmit(e as unknown as FormEvent);
+        <div className="rounded-2xl border border-vs-border bg-vs-raised transition-all
+                        focus-within:border-brand-500 focus-within:ring-2 focus-within:ring-brand-500/20">
+          <textarea
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                void handleSubmit(e as unknown as FormEvent);
+              }
+            }}
+            placeholder={
+              activeSessionId
+                ? "Describe what you want to build or change…"
+                : "Create or open a project first"
             }
-          }}
-          placeholder={
-            activeSessionId
-              ? "Describe what you want to build or change…"
-              : "Create or open a project first"
-          }
-          disabled={!activeSessionId}
-          rows={2}
-          className="flex-1 resize-none rounded-xl bg-vs-raised border border-vs-border px-4 py-3
-                     text-sm text-vs-text placeholder-vs-muted focus:outline-none
-                     focus:border-brand-500 disabled:opacity-50 disabled:cursor-not-allowed"
-        />
-        <button
-          type="submit"
-          disabled={!activeSessionId || !input.trim() || generation.isGenerating}
-          className="px-5 py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm
-                     font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors self-end"
-          title={
-            generation.isGenerating
-              ? "Wait for the current generation to finish"
-              : "Send message"
-          }
-        >
-          {generation.isGenerating ? "Working…" : "Send"}
-        </button>
+            disabled={!activeSessionId}
+            rows={2}
+            className="w-full resize-none bg-transparent px-4 pt-3 text-sm text-vs-text
+                       placeholder-vs-muted focus:outline-none disabled:opacity-50
+                       disabled:cursor-not-allowed"
+          />
+          <div className="flex items-center justify-between gap-2 px-2.5 pb-2.5">
+            <span className="text-[10px] text-vs-faint pl-1.5 select-none">
+              Enter to send · Shift+Enter for a new line
+            </span>
+            <button
+              type="submit"
+              disabled={!activeSessionId || !input.trim() || generation.isGenerating}
+              className="px-4 py-2 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700
+                         hover:from-brand-600 hover:to-brand-700 text-white text-sm font-medium
+                         shadow-sm shadow-brand-500/30 disabled:opacity-40 disabled:cursor-not-allowed
+                         transition-all disabled:shadow-none"
+              title={
+                generation.isGenerating
+                  ? "Wait for the current generation to finish"
+                  : "Send message"
+              }
+            >
+              {generation.isGenerating ? "Working…" : "Send"}
+            </button>
+          </div>
+        </div>
       </form>
     </div>
   );

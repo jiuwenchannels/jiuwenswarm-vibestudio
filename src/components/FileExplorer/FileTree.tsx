@@ -59,10 +59,14 @@ function TreeNodeView({ node, depth, activeFile, onSelect }: NodeProps): ReactNo
         <button
           onClick={() => node.isFile && onSelect(node.path)}
           className={[
-            "w-full text-left flex items-center gap-1.5 px-2 py-1 text-xs rounded",
-            "hover:bg-vs-raised transition-colors",
-            isActive ? "bg-vs-raised text-brand-500" : "text-vs-muted",
-            node.isFile ? "cursor-pointer" : "cursor-default font-medium text-vs-text",
+            "w-full text-left flex items-center gap-1.5 px-2 py-1 text-xs rounded-md",
+            "transition-colors",
+            isActive
+              ? "bg-brand-500/10 text-brand-400 font-medium"
+              : node.isFile
+                ? "text-vs-muted hover:bg-vs-raised hover:text-vs-text"
+                : "font-medium text-vs-text hover:bg-vs-raised",
+            node.isFile ? "cursor-pointer" : "cursor-default",
           ].join(" ")}
           style={{ paddingLeft: `${8 + depth * 12}px` }}
         >

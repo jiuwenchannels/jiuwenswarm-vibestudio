@@ -84,7 +84,10 @@ function OfflinePreview({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ files, entry }),
         });
-        if (!res.ok) throw new Error(`Bundle failed (HTTP ${res.status})`);
+        if (!res.ok) {
+          const detail = (await res.text()).trim();
+          throw new Error(detail || `Bundle failed (HTTP ${res.status})`);
+        }
         const bundle = await res.text();
         if (!cancelled) setState({ kind: "ready", bundle });
       } catch (err) {

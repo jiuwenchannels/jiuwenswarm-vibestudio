@@ -98,24 +98,26 @@ export function SwarmActivity(): ReactNode {
       <div className="flex items-center justify-between px-4 py-2">
         <button
           onClick={toggleOpen}
-          className="flex items-center gap-2 min-w-0 text-left"
+          className="flex items-center gap-2 min-w-0 text-left group"
           title={open ? "Collapse activity" : "Expand activity"}
         >
           <span
-            className={`text-xs font-semibold text-vs-text uppercase tracking-wider transition-transform ${
+            className={`text-vs-muted transition-transform group-hover:text-vs-text ${
               open ? "rotate-90" : ""
             }`}
           >
-            ›
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="m9 18 6-6-6-6" />
+            </svg>
           </span>
-          <span className="text-xs font-semibold text-vs-text uppercase tracking-wider">
+          <span className="text-[11px] font-semibold text-vs-text uppercase tracking-wider">
             Swarm activity
           </span>
           {generation.isGenerating && (
             <span className="w-1.5 h-1.5 rounded-full bg-brand-500 animate-pulse" />
           )}
           {stepCount > 0 && (
-            <span className="text-[10px] font-medium text-vs-muted bg-vs-raised border border-vs-border rounded-full px-1.5 py-0.5 leading-none">
+            <span className="text-[10px] font-medium text-vs-muted bg-vs-raised border border-vs-border-light rounded-full px-2 py-0.5 leading-none">
               {stepCount} steps
             </span>
           )}
@@ -123,7 +125,7 @@ export function SwarmActivity(): ReactNode {
         <button
           onClick={clearAgentLog}
           disabled={stepCount === 0}
-          className="text-xs text-vs-faint hover:text-vs-muted transition-colors
+          className="text-[11px] text-vs-faint hover:text-vs-muted transition-colors
                      disabled:opacity-30 disabled:cursor-not-allowed"
           title="Clear activity"
         >
@@ -133,7 +135,7 @@ export function SwarmActivity(): ReactNode {
 
       {/* Body — only when expanded */}
       {open && stepCount > 0 && (
-        <div className="max-h-56 overflow-y-auto px-4 pb-3 space-y-1 text-xs">
+        <div className="max-h-56 overflow-y-auto px-4 pb-3 space-y-1 text-xs border-t border-vs-border-light pt-2">
           {agentLog.map((entry, i) => {
             const parsed = classify(entry);
             const id = `${entry.time}-${i}`;
