@@ -416,7 +416,7 @@ export function SandpackPreview({
 
       <SandpackProvider
         files={setup.sandpack}
-        template="react-ts"
+        customSetup={{ entry: setup.entry }}
         theme={isDark ? "dark" : "light"}
         options={{ visibleFiles: setup.visible }}
       >
