@@ -30,6 +30,7 @@ export type StreamEvent =
   | { kind: "delta"; text: string }
   | { kind: "status"; status: string; agent?: string }
   | { kind: "reasoning"; text: string }
+  | { kind: "ask_user"; requestId: string; question: string }
   | { kind: "done"; text?: string }
   | { kind: "error"; message: string };
 
@@ -60,6 +61,8 @@ interface ActiveStream {
   push: (event: StreamEvent) => void;
   finish: (err?: Error) => void;
   onReasoning: (text: string) => void;
+  /** True once any text delta has been received for this stream. */
+  receivedDelta: boolean;
 }
 
 const BACKOFF_MS = [1_000, 2_000, 4_000, 8_000, 16_000, 30_000];
@@ -343,6 +346,9 @@ export class RpcClient {
 
     const push = (event: StreamEvent): void => {
       emitReasoning();
+      if (event.kind === "delta" && this._stream?.requestId === requestId) {
+        this._stream.receivedDelta = true;
+      }
       buffer.push(event);
       notify?.();
     };
@@ -353,7 +359,13 @@ export class RpcClient {
       notify?.();
     };
 
-    this._stream = { requestId, push, finish, onReasoning: (text) => reasoningText.push(text) };
+    this._stream = {
+      requestId,
+      push,
+      finish,
+      onReasoning: (text) => reasoningText.push(text),
+      receivedDelta: false,
+    };
 
     const content = opts?.contextPrefix
       ? `${prompt}\n\n${opts.contextPrefix}`
@@ -403,11 +415,37 @@ export class RpcClient {
     });
   }
 
+  /**
+   * Reply to an agent's clarifying question (HITL / ask_user).
+   *
+   * The gateway's RPC method is `hitl.answer` (see the SDK's method map).
+   * Some gateways end the turn after asking, in which case callers should
+   * instead send the answer as a regular chat message.
+   */
+  async sendAnswer(
+    requestId: string,
+    answers: Record<string, string>,
+  ): Promise<void> {
+    await this._request("hitl.answer", { request_id: requestId, answers });
+  }
+
   // ---------------------------------------------------------------------------
   // Inbound message handling
   // ---------------------------------------------------------------------------
 
   private _handleMessage(raw: string): void {
+    // Dev diagnostics: show every raw inbound frame so protocol mismatches are
+    // visible in the console instead of failing silently. console.info (not
+    // debug) so it is visible with Chrome's default log level.
+    if (!config.isProd) {
+      try {
+        // eslint-disable-next-line no-console
+        console.info("[VibeStudio::ws] ⇐", raw);
+      } catch {
+        // Logging must never break the socket loop.
+      }
+    }
+
     let msg: Record<string, unknown>;
     try {
       msg = JSON.parse(raw) as Record<string, unknown>;
@@ -435,6 +473,8 @@ export class RpcClient {
     }
 
     // E2A format: { response_kind, request_id, body } (may be nested in payload).
+    // Some servers send the payload fields flat next to response_kind instead
+    // of inside a body object — fall back gracefully.
     const responseKind =
       (msg["response_kind"] as string | undefined) ||
       (msg["payload"] as Record<string, unknown> | undefined)?.["response_kind"] as
@@ -446,22 +486,29 @@ export class RpcClient {
         (msg["payload"] as Record<string, unknown> | undefined)?.["request_id"] as
           | string
           | undefined;
+      const container =
+        (msg["payload"] as Record<string, unknown> | undefined) || msg;
       const body = (msg["body"] as Record<string, unknown>) ||
-        (msg["payload"] as Record<string, unknown> | undefined)?.["body"] as
-          | Record<string, unknown>
-          | undefined ||
-        {};
+        (container["body"] as Record<string, unknown> | undefined) ||
+        container;
 
       if (responseKind === "e2a.chunk") {
         const eventType = (body["event_type"] as string) || "";
-        const delta = body["delta"];
+        const text = (body["delta"] ?? body["text"] ?? body["content"]) as string | undefined;
         const payload = { ...body } as Record<string, unknown>;
-        if (typeof delta === "string") {
-          if (eventType === "chat.delta" || eventType === "chat.reasoning") {
-            payload["text"] = delta;
+        if (typeof text === "string" && text.length > 0) {
+          if (!eventType || eventType === "chat.delta" || eventType === "token") {
+            payload["text"] = text;
+            this._dispatchStreamEvent("chat.delta", payload);
+          } else if (eventType === "chat.reasoning") {
+            payload["text"] = text;
+            this._dispatchStreamEvent("chat.reasoning", payload);
+          } else {
+            this._dispatchStreamEvent(eventType, payload);
           }
+        } else {
+          this._dispatchStreamEvent(eventType, payload);
         }
-        this._dispatchStreamEvent(eventType, payload);
       } else if (responseKind === "e2a.complete") {
         if (rid && this._pending.has(rid)) {
           const pending = this._pending.get(rid)!;
@@ -486,6 +533,16 @@ export class RpcClient {
         }
         this._stream?.finish(new Error(errMsg));
       }
+      return;
+    }
+
+    // Raw (non-event-wrapped) legacy frames: { type: "token", text } / done.
+    if (msg["type"] === "token" && typeof msg["text"] === "string") {
+      this._dispatchStreamEvent("chat.delta", msg);
+      return;
+    }
+    if (msg["type"] === "done") {
+      this._dispatchStreamEvent("chat.final", msg);
       return;
     }
 
@@ -523,9 +580,29 @@ export class RpcClient {
     const stream = this._stream;
     if (!stream) return;
 
+    // Salvage: if the stream hasn't received any text yet and an event we do
+    // not recognise carries a text-like payload, treat it as content. This
+    // covers gateways that use non-standard event names for the response.
+    if (
+      !stream.receivedDelta &&
+      !KNOWN_EVENT_TYPES.has(eventType) &&
+      !eventType.startsWith("team.")
+    ) {
+      const text = extractText(payload);
+      if (text !== null) {
+        stream.push({ kind: "delta", text });
+        return;
+      }
+    }
+
     switch (eventType) {
-      case "chat.delta": {
-        const text = (payload["text"] ?? payload["content"]) as string;
+      case "chat.delta":
+      case "token":
+      case "chat.chunk":
+      case "chat.content":
+      case "assistant.delta":
+      case "stream.delta": {
+        const text = (payload["text"] ?? payload["content"] ?? payload["delta"]) as string;
         if (typeof text === "string" && text.length > 0) {
           stream.push({ kind: "delta", text });
         }
@@ -550,9 +627,49 @@ export class RpcClient {
       case "chat.llm_call_start":
         stream.push({ kind: "status", status: "Thinking…" });
         break;
+      case "chat.ask_user_question": {
+        // The agent paused to ask the user a question (HITL). Surface it as a
+        // dedicated event; the chat UI turns it into an inline answer prompt.
+        const requestId =
+          (payload["request_id"] as string) ||
+          (payload["requestId"] as string) ||
+          "";
+        const questions = payload["questions"] as
+          | Array<{ question?: string; header?: string }>
+          | undefined;
+        const first = questions?.[0];
+        const question =
+          first?.question ??
+          first?.header ??
+          "The swarm needs clarification — please answer above.";
+        if (requestId && question) {
+          stream.push({ kind: "ask_user", requestId, question });
+        }
+        break;
+      }
+      case "chat.processing_status": {
+        // Some gateways end a turn with processing_status instead of chat.final.
+        if (payload["is_complete"] === true) {
+          stream.finish();
+        }
+        break;
+      }
       case "chat.final":
+      case "chat.done":
+      case "done": {
+        // Some servers deliver the complete response only on the final frame.
+        // If no text was streamed, fall back to the final frame's payload.
+        if (!stream.receivedDelta) {
+          const finalText =
+            extractText(payload) ??
+            (typeof payload["delta"] === "string" ? (payload["delta"] as string) : null);
+          if (finalText !== null && finalText.length > 0) {
+            stream.push({ kind: "delta", text: finalText });
+          }
+        }
         stream.finish();
         break;
+      }
       case "chat.error": {
         const message =
           (payload["message"] as string) ||
@@ -579,6 +696,36 @@ export class RpcClient {
         }
     }
   }
+}
+
+/** Event names that are handled explicitly and should not be salvaged. */
+const KNOWN_EVENT_TYPES = new Set([
+  "chat.delta",
+  "token",
+  "chat.chunk",
+  "chat.content",
+  "assistant.delta",
+  "stream.delta",
+  "chat.reasoning",
+  "chat.tool_call",
+  "chat.llm_call_start",
+  "chat.ask_user_question",
+  "chat.processing_status",
+  "chat.final",
+  "chat.done",
+  "done",
+  "chat.error",
+]);
+
+const TEXT_KEYS = ["text", "content", "delta", "chunk", "value", "answer", "result"];
+
+/** Pull a text payload out of a frame under any of the common content keys. */
+function extractText(payload: Record<string, unknown>): string | null {
+  for (const key of TEXT_KEYS) {
+    const value = payload[key];
+    if (typeof value === "string" && value.trim().length > 0) return value;
+  }
+  return null;
 }
 
 export class ConnectionError extends Error {

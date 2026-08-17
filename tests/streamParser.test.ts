@@ -90,6 +90,14 @@ Done.
     expect(result.deltas[0].content).toContain("# Title");
     expect(result.deltas[0].content).toContain("Some `code`.");
   });
+
+  it("accepts @@END_FILE without a newline after the closing fence", () => {
+    const raw = "@@FILE: src/App.tsx\n```tsx\nconst x = 1;\n```\n@@END_FILE";
+    const result = parseGenerationResult(raw);
+    expect(result.deltas).toHaveLength(1);
+    expect(result.deltas[0].path).toBe("src/App.tsx");
+    expect(result.deltas[0].content).toContain("const x = 1;");
+  });
 });
 
 describe("collapseFileBlocks", () => {

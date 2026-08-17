@@ -32,8 +32,11 @@ export interface ParseResult {
   prose: string;
 }
 
+// Tolerant of minor agent output variation: optional whitespace around the
+// path, the fence, and @@END_FILE (which may follow the closing fence without
+// a newline).
 const FILE_PATTERN =
-  /@@FILE:\s*(\S+)\s*\r?\n```[^\n]*\r?\n([\s\S]*?)```\r?\n@@END_FILE/g;
+  /@@FILE:\s*(\S+)\s*\r?\n\s*```[^\n]*\r?\n([\s\S]*?)```\s*\r?\n@@END_FILE/g;
 
 const DELETE_PATTERN = /@@DELETE:\s*(\S+)/g;
 

@@ -73,15 +73,12 @@ export function ChatPanel(): React.ReactNode {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const handleSubmit = useCallback(
-    async (e: FormEvent, overrideText?: string): Promise<void> => {
-      e.preventDefault();
-      const text = (overrideText ?? input).trim();
+  const runGeneration = useCallback(
+    async (text: string): Promise<void> => {
       if (!text || !activeSessionId) return;
       // The RPC client only supports one active stream — never start a second
       // generation while one is already running.
       if (useProjectStore.getState().generation.isGenerating) return;
-      if (!overrideText) setInput("");
 
       snapshotForRewind();
 
@@ -96,6 +93,7 @@ export function ChatPanel(): React.ReactNode {
       clearStreamBuffer();
 
       let accumulated = "";
+      let questionAsked = false;
 
       try {
         for await (const event of client.streamEvents(text, opts)) {
@@ -132,8 +130,34 @@ export function ChatPanel(): React.ReactNode {
               });
               break;
 
+            case "ask_user": {
+              // The agent paused to ask a clarifying question — turn the
+              // streaming bubble into an interactive answer card.
+              questionAsked = true;
+              setGenerating(true, "Awaiting your answer");
+              updateLastAssistantMessage((m) => ({
+                ...m,
+                content: event.question,
+                isStreaming: false,
+                question: { requestId: event.requestId, text: event.question },
+              }));
+              break;
+            }
+
             case "done": {
+              if (questionAsked) {
+                // The bubble is already the question card — do not overwrite it.
+                clearStreamBuffer();
+                setGenerating(false);
+                break;
+              }
               const { deltas, prose } = parseGenerationResult(accumulated);
+              // eslint-disable-next-line no-console
+              console.info("[VibeStudio] generation finished", {
+                accumulatedLen: accumulated.length,
+                deltas: deltas.length,
+                proseLen: prose.length,
+              });
               if (deltas.length > 0) {
                 applyDeltas(deltas);
                 if (activeSessionId) {
@@ -146,9 +170,11 @@ export function ChatPanel(): React.ReactNode {
                 deltas.length > 0
                   ? `Generated ${deltas.length} file${deltas.length === 1 ? "" : "s"}.`
                   : accumulated;
+              const fallback =
+                "The swarm finished without producing any files or text. Please try again.";
               updateLastAssistantMessage((m) => ({
                 ...m,
-                content: prose || summary,
+                content: prose || summary || fallback,
                 isStreaming: false,
               }));
               clearStreamBuffer();
@@ -176,11 +202,45 @@ export function ChatPanel(): React.ReactNode {
       }
     },
     [
-      input, activeSessionId,
+      activeSessionId,
       addChatMessage, updateLastAssistantMessage,
       applyDeltas, setGenerating, appendToken, clearStreamBuffer,
       snapshotForRewind, persistFiles, appendAgentLog,
     ],
+  );
+
+  const handleSubmit = useCallback(
+    async (e: FormEvent, overrideText?: string): Promise<void> => {
+      e.preventDefault();
+      const text = (overrideText ?? input).trim();
+      if (!text) return;
+      if (!overrideText) setInput("");
+      await runGeneration(text);
+    },
+    [input, runGeneration],
+  );
+
+  /**
+   * Answer an agent's clarifying question.
+   *
+   * Observed gateways END the turn after asking (is_complete arrives right
+   * after the question), so the reliable path is to send the answer as a
+   * normal chat message — the agent's question is already in the conversation
+   * context, so the next message is read as the answer. The dedicated
+   * `hitl.answer` method is tried first in case the gateway pauses instead.
+   */
+  const handleAnswer = useCallback(
+    async (requestId: string, answer: string): Promise<void> => {
+      const text = answer.trim();
+      if (!text) return;
+      try {
+        await getClient().sendAnswer(requestId, { answer: text });
+      } catch {
+        // Fall back: send as a new user message so the swarm continues.
+      }
+      await runGeneration(text);
+    },
+    [runGeneration],
   );
 
   // Auto-send template prompt once connected.
@@ -223,7 +283,7 @@ export function ChatPanel(): React.ReactNode {
           </div>
         )}
         {messages.map((msg) => (
-          <MessageBubble key={msg.id} message={msg} />
+          <MessageBubble key={msg.id} message={msg} onAnswer={handleAnswer} />
         ))}
         <div ref={bottomRef} />
       </div>

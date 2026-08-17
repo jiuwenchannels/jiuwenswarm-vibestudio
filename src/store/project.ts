@@ -18,6 +18,8 @@ export interface ChatMessage {
   role: MessageRole;
   content: string;
   isStreaming?: boolean;
+  /** When set, renders an interactive "agent needs clarification" card. */
+  question?: { requestId: string; text: string };
 }
 
 // ---------------------------------------------------------------------------
