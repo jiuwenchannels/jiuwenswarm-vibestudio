@@ -58,14 +58,19 @@ When you open a project you enter the Studio.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
-│  ← Dashboard  |  Project name     ↩ Undo  ↓ ZIP  ↓ Chat  </>           │
-├─────────────────────────────────────────────────────────────────────────┤
-│   Chat panel                          |   Live preview                  │
-│   (send prompts, see responses,       |   (your app running live)       │
-│   plus inline swarm activity          |                                 │
-│   while agents work)                  |                                 │
-├───────────────────────────────────────┴─────────────────────────────────┤
+│  ← Dashboard  |  Project name      Files  </>   ↩ Undo  ↓ ZIP  ↓ Chat    │
+├───────────────┬──────────────────────────────┬───────────────────────────┤
+│  Chat panel   │  ⇽ resizable gap             │  Live preview (hero)      │
+│  (prompts,    │                              │  ┌───────────────────────┐│
+│  responses,   │                              │  │  your app             ││
+│  inline swarm │                              │  └───────────────────────┘│
+│  activity)    │                              │  ⇡ code drawer (optional) │
+└───────────────┴──────────────────────────────┴───────────────────────────┘
 ```
+
+The workspace is organised around the **preview**: it always gets the remaining
+space. The **chat** is the driver on the left (resizable), and **Files** and
+**Code** are drawers you toggle from the toolbar.
 
 ### Chat panel
 
@@ -84,6 +89,17 @@ The panel shows:
 The right side shows your app running live in the browser as soon as the first
 generation completes. It automatically refreshes whenever new files are
 generated. The preview uses the same code that appears in the code editor.
+
+### Files and code drawers
+
+- Click **Files** to open the file tree on the left.
+- Clicking a file opens it in the code editor — and if the editor is closed,
+  it opens automatically so you can read the file.
+- Click **`</>`** to show or hide the **code drawer**, a resizable panel at the
+  bottom of the preview. Drag its handle up to give code more room — the
+  preview keeps the top of the space.
+- Drag the handle between the chat and preview to resize the chat column. Your
+  panel sizes are remembered between visits.
 
 ---
 

@@ -95,13 +95,23 @@ function TreeNodeView({ node, depth, activeFile, onSelect }: NodeProps): ReactNo
   );
 }
 
-export function FileTree(): ReactNode {
+interface Props {
+  /** Called with the selected path after it is set as active (e.g. to open the editor). */
+  onSelect?: (path: string) => void;
+}
+
+export function FileTree({ onSelect }: Props): ReactNode {
   const files = useProjectStore((s) => s.files);
   const activeFile = useProjectStore((s) => s.activeFile);
   const setActiveFile = useProjectStore((s) => s.setActiveFile);
 
   const tree = buildTree(files);
   const hasFiles = Object.keys(files).length > 0;
+
+  const handleSelect = (path: string): void => {
+    setActiveFile(path);
+    onSelect?.(path);
+  };
 
   return (
     <div className="h-full bg-vs-surface overflow-y-auto">
@@ -114,7 +124,7 @@ export function FileTree(): ReactNode {
           node={tree}
           depth={0}
           activeFile={activeFile}
-          onSelect={setActiveFile}
+          onSelect={handleSelect}
         />
       ) : (
         <div className="px-3 py-4 text-xs text-vs-faint text-center">

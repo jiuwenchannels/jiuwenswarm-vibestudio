@@ -19,8 +19,10 @@ The agent side runs on the server:
 
 The browser side renders:
 - A **chat panel** with live streaming token output and quick-action buttons
-- A **Sandpack preview** — the generated app running live in the browser
-- A **file tree** and optional code editor
+- A **Sandpack preview** — the generated app running live in the browser; the
+  hero surface that always gets the remaining space
+- **Files** and **Code** drawers — a file tree that opens files in a resizable
+  code drawer beneath the preview (nothing squeezes the preview sideways)
 - **Swarm activity inline in the chat** — a collapsible, real-time per-agent
   activity feed that opens while agents work and closes when they finish
 - A **template picker** with 6 ready-made starters
@@ -90,25 +92,27 @@ jiuwenswarm-vibestudio/
 │   ├── store/
 │   │   ├── project.ts                  # Files, chat messages, agent log, rewind stack
 │   │   ├── session.ts                  # Project list + file snapshots (localStorage)
+│   │   ├── layout.ts                   # Chat width + code drawer height (localStorage)
 │   │   └── theme.ts                    # Dark/light preference (localStorage)
 │   │
 │   ├── components/
+│   │   ├── Resizer.tsx                 # Drag handle for resizable panes
 │   │   ├── Chat/
 │   │   │   ├── ChatPanel.tsx           # Prompt input + streaming messages + quick-actions
 │   │   │   └── MessageBubble.tsx       # User / assistant / status bubbles
 │   │   ├── Preview/
-│   │   │   └── SandpackPreview.tsx     # Live preview (+ optional Sandpack code editor)
+│   │   │   └── SandpackPreview.tsx     # Live preview + resizable code drawer underneath
 │   │   ├── FileExplorer/
-│   │   │   └── FileTree.tsx            # Nested file tree (toggleable)
+│   │   │   └── FileTree.tsx            # Nested file tree (opens files in the editor)
 │   │   ├── Swarm/
-│   │   │   └── SwarmActivity.tsx        # Inline collapsible agent activity feed (in chat)
-│   │   ├── TemplateModal.tsx            # Template picker overlay (6 starters)
+│   │   │   └── SwarmActivity.tsx       # Inline collapsible agent activity feed (in chat)
+│   │   ├── TemplateModal.tsx           # Template picker overlay (6 starters)
 │   │   ├── ReconnectToast.tsx          # Floating disconnection banner
 │   │   └── ErrorBoundary.tsx           # Render-error recovery screen
 │   │
 │   └── pages/
 │       ├── Dashboard.tsx               # Project list, create, rename, delete, templates
-│       └── Studio.tsx                  # Main workspace (chat + preview + swarm, mobile tabs)
+│       └── Studio.tsx                  # Main workspace (chat + preview + drawers, mobile tabs)
 │
 ├── tests/
 │   ├── setup.ts                        # Vitest + jest-dom bootstrap
@@ -126,6 +130,7 @@ jiuwenswarm-vibestudio/
 │
 └── examples/
     └── prompts/
+        ├── counter-app.md              # Minimal counter — the simplest possible app
         ├── todo-app.md                 # To-do app with priorities, tags, dark mode
         ├── landing-page.md             # SaaS landing page
         ├── dashboard.md                # Analytics dashboard with charts

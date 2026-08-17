@@ -4,23 +4,17 @@
     <option name="autoReloadType" value="ALL" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="3fc1f405-96b4-4e40-b7ea-9e1cf65dbe69" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+    <list default="true" id="3fc1f405-96b4-4e40-b7ea-9e1cf65dbe69" name="Changes" comment="Initial">
+      <change afterPath="$PROJECT_DIR$/src/components/Resizer.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/store/layout.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tests/layout.test.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/docs/ARCHITECTURE.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/ARCHITECTURE.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/docs/USER_GUIDE.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/USER_GUIDE.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/components/Chat/ChatPanel.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/Chat/ChatPanel.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/examples/README.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/components/FileExplorer/FileTree.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/FileExplorer/FileTree.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/components/Preview/SandpackPreview.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/Preview/SandpackPreview.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/components/Swarm/SwarmPanel.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/lib/client.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/client.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/lib/streamParser.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/streamParser.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/pages/Dashboard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/pages/Dashboard.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/pages/Studio.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/pages/Studio.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/store/project.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/store/project.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/projectStore.test.ts" beforeDir="false" afterPath="$PROJECT_DIR$/tests/projectStore.test.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/streamParser.test.ts" beforeDir="false" afterPath="$PROJECT_DIR$/tests/streamParser.test.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -41,6 +35,65 @@
   <component name="McpProjectServerCommands">
     <commands />
     <urls />
+  </component>
+  <component name="NextEditCompletionFeaturesState">
+    <decayedCancelled>
+      <entry key="MS100" value="1.0940779217131917" />
+      <entry key="MS500" value="1.6233005971375487" />
+      <entry key="S2" value="1.888534685142091" />
+      <entry key="S5" value="1.9538273128392234" />
+      <entry key="S10" value="1.976640831032178" />
+      <entry key="S30" value="1.992152183227" />
+      <entry key="S60" value="1.9960683627276794" />
+      <entry key="M2" value="1.998032245334628" />
+      <entry key="M5" value="1.9992124329985832" />
+      <entry key="M10" value="1.9996061389360227" />
+      <entry key="M15" value="1.9997374087180486" />
+      <entry key="M30" value="1.9998686957386198" />
+      <entry key="H1" value="1.9999343457140673" />
+      <entry key="H2" value="1.9999671723182053" />
+      <entry key="H4" value="1.9999835860243933" />
+      <entry key="D1" value="1.9999972643186892" />
+      <entry key="W1" value="1.999999609187926" />
+    </decayedCancelled>
+    <decayedSelected>
+      <entry key="MS100" value="0.0" />
+      <entry key="MS500" value="0.0" />
+      <entry key="S2" value="0.0" />
+      <entry key="S5" value="0.0" />
+      <entry key="S10" value="0.0" />
+      <entry key="S30" value="0.0" />
+      <entry key="S60" value="0.0" />
+      <entry key="M2" value="0.0" />
+      <entry key="M5" value="0.0" />
+      <entry key="M10" value="0.0" />
+      <entry key="M15" value="0.0" />
+      <entry key="M30" value="0.0" />
+      <entry key="H1" value="0.0" />
+      <entry key="H2" value="0.0" />
+      <entry key="H4" value="0.0" />
+      <entry key="D1" value="0.0" />
+      <entry key="W1" value="0.0" />
+    </decayedSelected>
+    <decayedShown>
+      <entry key="MS100" value="0.8511367449389735" />
+      <entry key="MS500" value="1.506035266880314" />
+      <entry key="S2" value="1.8499201047198355" />
+      <entry key="S5" value="1.937443779047152" />
+      <entry key="S10" value="1.9682843077106744" />
+      <entry key="S30" value="1.9893292449112123" />
+      <entry key="S60" value="1.9946521627774907" />
+      <entry key="M2" value="1.9973229587311014" />
+      <entry key="M5" value="1.9989284330619022" />
+      <entry key="M10" value="1.9994640913763764" />
+      <entry key="M15" value="1.9996426997659853" />
+      <entry key="M30" value="1.9998213359723251" />
+      <entry key="H1" value="1.9999106645082076" />
+      <entry key="H2" value="1.9999553313845793" />
+      <entry key="H4" value="1.999977665474904" />
+      <entry key="D1" value="1.999996277548958" />
+      <entry key="W1" value="1.9999994682205402" />
+    </decayedShown>
   </component>
   <component name="ProjectColorInfo"><![CDATA[{
   "customColor": "",
@@ -88,11 +141,24 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1786963006711</updated>
-      <workItem from="1786963008374" duration="1405000" />
+      <workItem from="1786963008374" duration="1817000" />
     </task>
+    <task id="LOCAL-00001" summary="Initial">
+      <option name="closed" value="true" />
+      <created>1786964434771</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1786964434771</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Initial" />
+    <option name="LAST_COMMIT_MESSAGE" value="Initial" />
   </component>
 </project>

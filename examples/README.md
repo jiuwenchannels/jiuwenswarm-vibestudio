@@ -20,6 +20,7 @@ together with a description of what it builds and tips for follow-up requests.
 
 | File | What it builds | Complexity |
 |---|---|---|
+| [`prompts/counter-app.md`](prompts/counter-app.md) | Minimal counter — single file, two buttons, no extras | Beginner |
 | [`prompts/todo-app.md`](prompts/todo-app.md) | To-do app — tasks, priorities, tags, dark mode, localStorage | Beginner |
 | [`prompts/landing-page.md`](prompts/landing-page.md) | SaaS landing page — hero, pricing, FAQ, email sign-up | Beginner |
 | [`prompts/dashboard.md`](prompts/dashboard.md) | Analytics dashboard — KPI cards, charts, sidebar nav | Intermediate |

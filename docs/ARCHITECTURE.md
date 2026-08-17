@@ -364,15 +364,36 @@ workspace session.
 
 ---
 
-## Mobile Layout
+## Workspace Layout
 
-On screens narrower than the Tailwind `md` breakpoint (768 px), Studio hides
-the side-by-side flex layout and shows a tab bar instead:
+### Desktop (≥ md)
+
+The preview is the hero surface. `Studio` renders, in order:
+
+1. Optional **Files drawer** (`w-56`, toggled by the **Files** button) containing
+   `FileTree`.
+2. The **chat column** at a persisted pixel width (`store/layout.ts`,
+   default 420 px) containing `ChatPanel`.
+3. A `Resizer` drag handle (pointer-based) that updates `chatWidth`,
+   clamped to `[320, 760]`.
+4. The **preview column** (`flex-1`) containing `SandpackPreview`. When the code
+   drawer is open, it is a vertical split: the live preview on top and a
+   resizable `SandpackCodeEditor` drawer beneath it. Its height is persisted
+   (`codeHeight`, clamped to `[200, 560]`) and adjusted via a second `Resizer`.
+
+`FileTree` calls `setActiveFile` and reports the selection back through an
+optional `onSelect` prop, which `Studio` uses to auto-open the code drawer. The
+editor's `activeFile` is driven by the same store value, so clicking a file in
+the tree opens it in the editor.
+
+Sizes persist via the `"vs-layout"` localStorage key (`store/layout.ts`).
+
+### Mobile (< md)
+
+`Studio` hides the side-by-side flex layout and shows a tab bar instead:
 
 | Tab | Content |
 |---|---|
 | Chat | Full-height `ChatPanel` (including inline swarm activity) |
 | Preview | Full-height `SandpackPreview` |
-
-The desktop layout (hidden on mobile via `hidden md:flex`) continues to use
-the side-by-side column layout with an optional FileTree column.
+| Code | `FileTree` on top + `SandpackPreview` with `hidePreview` (editor only) |

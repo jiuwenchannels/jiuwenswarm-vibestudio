@@ -1,20 +1,22 @@
 /**
  * Studio — the main workspace page.
  *
- * Desktop layout (≥ 768 px):
- *   [ChatPanel ~38%] | [SandpackPreview ~62%]
- *   With code:   [FileTree 176px] | [Chat] | [Sandpack with editor]
- *
- * Swarm activity is NOT a separate column — it renders inline inside the
- * chat panel as a collapsible section, so the user's attention stays in the
- * conversation while the agents work.
+ * Layout principles:
+ * - Chat is the driver, Preview is the hero. The preview always gets the
+ *   remaining space; code opens as a resizable drawer at its bottom (vertical
+ *   split) instead of squeezing it sideways.
+ * - Files is a collapsible left drawer. Selecting a file opens it in the code
+ *   drawer (and auto-opens the drawer).
+ * - The chat column is resizable via a drag handle; sizes persist in the
+ *   layout store.
+ * - Swarm activity lives inline inside the chat panel.
  *
  * Mobile layout (< 768 px):
- *   Full-width tab switcher: Chat | Preview
+ *   Full-width tab switcher: Chat | Preview | Code
  *
  * Phase 2 additions:
  * - ReconnectToast (2.12)
- * - Swarm activity inline in the chat (2.5, redesigned)
+ * - Resizable layout + drawers (redesigned)
  * - Chat export to Markdown (2.11)
  * - Mobile tab layout (2.10)
  * - Wrapped in ErrorBoundary (1.16)
@@ -24,6 +26,7 @@ import { useParams, Link } from "react-router-dom";
 import { ChatPanel } from "../components/Chat/ChatPanel";
 import { SandpackPreview } from "../components/Preview/SandpackPreview";
 import { FileTree } from "../components/FileExplorer/FileTree";
+import { Resizer } from "../components/Resizer";
 import { ReconnectToast } from "../components/ReconnectToast";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 import { getClient, connectClient } from "../lib/client";
@@ -31,9 +34,19 @@ import { downloadProjectZip, exportChatMarkdown } from "../lib/export";
 import { useSessionStore } from "../store/session";
 import { useProjectStore } from "../store/project";
 import { useThemeStore } from "../store/theme";
+import {
+  useLayoutStore,
+  CHAT_WIDTH_MIN,
+  CHAT_WIDTH_MAX,
+  CODE_HEIGHT_MIN,
+  CODE_HEIGHT_MAX,
+} from "../store/layout";
 
 // Mobile tab options.
-type MobileTab = "chat" | "preview";
+type MobileTab = "chat" | "preview" | "code";
+
+const clamp = (value: number, min: number, max: number): number =>
+  Math.min(max, Math.max(min, value));
 
 function StudioInner(): React.ReactNode {
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -43,7 +56,11 @@ function StudioInner(): React.ReactNode {
     loadFiles, popRewindSnapshot, restoreSnapshot,
   } = useProjectStore();
   const { isDark, toggle: toggleTheme } = useThemeStore();
+  const {
+    chatWidth, codeHeight, setChatWidth, setCodeHeight,
+  } = useLayoutStore();
 
+  const [showFiles, setShowFiles] = useState(false);
   const [showCode, setShowCode] = useState(false);
   const [mobileTab, setMobileTab] = useState<MobileTab>("chat");
 
@@ -100,7 +117,18 @@ function StudioInner(): React.ReactNode {
   const hasFiles = Object.keys(files).length > 0;
   const hasMessages = messages.some((m) => m.role !== "status");
 
-  const mobileTabs: MobileTab[] = ["chat", "preview"];
+  const mobileTabs: MobileTab[] = ["chat", "preview", "code"];
+
+  const handleChatResize = (delta: number): void => {
+    setChatWidth(clamp(chatWidth + delta, CHAT_WIDTH_MIN, CHAT_WIDTH_MAX));
+  };
+
+  const handleCodeResize = (delta: number): void => {
+    setCodeHeight(clamp(codeHeight + delta, CODE_HEIGHT_MIN, CODE_HEIGHT_MAX));
+  };
+
+  // Clicking a file opens it in the code drawer.
+  const handleFileSelect = (): void => setShowCode(true);
 
   return (
     <div className="h-screen flex flex-col bg-vs-bg overflow-hidden">
@@ -130,6 +158,34 @@ function StudioInner(): React.ReactNode {
               {generation.activeAgent ?? "Generating…"}
             </span>
           )}
+
+          {/* Files drawer toggle */}
+          <button
+            onClick={() => setShowFiles((v) => !v)}
+            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs
+                        transition-colors border
+                        ${showFiles
+                          ? "bg-brand-900 border-brand-700 text-brand-300"
+                          : "bg-vs-raised border-vs-border text-vs-muted hover:text-vs-text hover:bg-vs-border"
+                        }`}
+            title={showFiles ? "Hide file explorer" : "Show file explorer"}
+          >
+            Files
+          </button>
+
+          {/* Code drawer toggle */}
+          <button
+            onClick={() => setShowCode((v) => !v)}
+            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs
+                        transition-colors border
+                        ${showCode
+                          ? "bg-brand-900 border-brand-700 text-brand-300"
+                          : "bg-vs-raised border-vs-border text-vs-muted hover:text-vs-text hover:bg-vs-border"
+                        }`}
+            title={showCode ? "Hide code editor" : "Show code editor"}
+          >
+            {"</>"}
+          </button>
 
           {/* Rewind */}
           {rewindStack.length > 0 && !generation.isGenerating && (
@@ -170,20 +226,6 @@ function StudioInner(): React.ReactNode {
             </button>
           )}
 
-          {/* Code toggle */}
-          <button
-            onClick={() => setShowCode((v) => !v)}
-            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs
-                        transition-colors border
-                        ${showCode
-                          ? "bg-brand-900 border-brand-700 text-brand-300"
-                          : "bg-vs-raised border-vs-border text-vs-muted hover:text-vs-text hover:bg-vs-border"
-                        }`}
-            title={showCode ? "Hide file explorer and editor" : "Show file explorer and editor"}
-          >
-            {"</>"} {showCode ? "Hide" : "Code"}
-          </button>
-
           {/* Theme toggle */}
           <button
             onClick={toggleTheme}
@@ -216,18 +258,27 @@ function StudioInner(): React.ReactNode {
 
       {/* ── Desktop layout (≥ md) ─────────────────────────── */}
       <div className="hidden md:flex flex-1 overflow-hidden">
-        {showCode && (
-          <div className="w-44 shrink-0 border-r border-vs-border">
-            <FileTree />
+        {showFiles && (
+          <div className="w-56 shrink-0 border-r border-vs-border">
+            <FileTree onSelect={handleFileSelect} />
           </div>
         )}
 
-        <div className="w-[38%] shrink-0 border-r border-vs-border min-w-0">
+        <div
+          style={{ width: chatWidth }}
+          className="shrink-0 border-r border-vs-border min-w-0"
+        >
           <ChatPanel />
         </div>
 
+        <Resizer direction="horizontal" onDrag={handleChatResize} />
+
         <div className="flex-1 overflow-hidden min-w-0">
-          <SandpackPreview showEditor={showCode} />
+          <SandpackPreview
+            showEditor={showCode}
+            editorHeight={codeHeight}
+            onEditorResize={handleCodeResize}
+          />
         </div>
       </div>
 
@@ -237,7 +288,15 @@ function StudioInner(): React.ReactNode {
           <ChatPanel />
         </div>
         <div className={`h-full ${mobileTab === "preview" ? "block" : "hidden"}`}>
-          <SandpackPreview showEditor={showCode} />
+          <SandpackPreview />
+        </div>
+        <div className={`h-full flex flex-col ${mobileTab === "code" ? "block" : "hidden"}`}>
+          <div className="shrink-0 max-h-48 overflow-y-auto border-b border-vs-border">
+            <FileTree onSelect={() => setMobileTab("code")} />
+          </div>
+          <div className="flex-1 min-h-0">
+            <SandpackPreview showEditor hidePreview />
+          </div>
         </div>
       </div>
     </div>

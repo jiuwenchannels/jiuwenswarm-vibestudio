@@ -1,12 +1,11 @@
 /**
- * SandpackPreview — live sandboxed preview (and optional code editor) for the
+ * SandpackPreview — live sandboxed preview (and optional code drawer) for the
  * generated project files, powered by @codesandbox/sandpack-react.
  *
- * showEditor = false (default / Base44-style):
- *   Full-width live preview only — no code editor visible.
- *
- * showEditor = true (when user clicks "Code"):
- *   Code editor on the left + live preview on the right, Sandpack-native split.
+ * Layout: the preview is the hero surface. The code editor (when enabled) is a
+ * resizable drawer at the bottom — a vertical split — so it never squeezes the
+ * preview sideways. The editor's active file is driven by the project store,
+ * so clicking a file in the tree opens it here.
  *
  * The Sandpack theme tracks the global dark/light preference.
  * Note: the live preview runs in an iframe with its own document — its
@@ -15,15 +14,41 @@
  */
 import {
   SandpackProvider,
-  SandpackLayout,
   SandpackPreview as SandpackPreviewPane,
   SandpackCodeEditor,
+  useSandpack,
 } from "@codesandbox/sandpack-react";
+import { useEffect } from "react";
 import { useProjectStore } from "../../store/project";
 import { useThemeStore } from "../../store/theme";
+import { Resizer } from "../Resizer";
 
 interface Props {
   showEditor?: boolean;
+  /** Height of the bottom code drawer in px. */
+  editorHeight?: number;
+  /** Called with a pixel delta while the user drags the drawer resize handle. */
+  onEditorResize?: (delta: number) => void;
+  /** Hide the preview pane entirely (used by the mobile Code tab). */
+  hidePreview?: boolean;
+}
+
+/**
+ * Bridges the project store's activeFile (driven by the FileTree) into
+ * Sandpack's internal store, so clicking a file in the tree opens it in the
+ * editor. Sandpack keys are rooted with a leading slash.
+ */
+function SyncActiveFile(): null {
+  const activeFile = useProjectStore((s) => s.activeFile);
+  const { sandpack } = useSandpack();
+
+  useEffect(() => {
+    if (!activeFile) return;
+    const key = activeFile.startsWith("/") ? activeFile : `/${activeFile}`;
+    if (key in sandpack.files) sandpack.setActiveFile(key);
+  }, [activeFile, sandpack]);
+
+  return null;
 }
 
 /** Minimal placeholder shown before the first generation. */
@@ -52,13 +77,20 @@ const PLACEHOLDER_FILES = {
   },
 };
 
-export function SandpackPreview({ showEditor = false }: Props): React.ReactNode {
+export function SandpackPreview({
+  showEditor = false,
+  editorHeight = 320,
+  onEditorResize,
+  hidePreview = false,
+}: Props): React.ReactNode {
   const files = useProjectStore((s) => s.files);
   const isGenerating = useProjectStore((s) => s.generation.isGenerating);
   const isDark = useThemeStore((s) => s.isDark);
 
+  const hasFiles = Object.keys(files).length > 0;
+
   const sandpackFiles =
-    Object.keys(files).length > 0
+    hasFiles
       ? Object.fromEntries(
           Object.entries(files).map(([path, code]) => [
             path.startsWith("/") ? path : `/${path}`,
@@ -66,8 +98,6 @@ export function SandpackPreview({ showEditor = false }: Props): React.ReactNode 
           ]),
         )
       : PLACEHOLDER_FILES;
-
-  const hasFiles = Object.keys(files).length > 0;
 
   return (
     <div className="relative h-full">
@@ -80,7 +110,7 @@ export function SandpackPreview({ showEditor = false }: Props): React.ReactNode 
       )}
 
       {/* Regeneration — non-blocking pill so the running app stays usable */}
-      {isGenerating && hasFiles && (
+      {isGenerating && hasFiles && !hidePreview && (
         <div className="absolute top-3 right-3 z-10 pointer-events-none flex items-center gap-2
                         px-3 py-1.5 rounded-full bg-vs-surface/90 border border-vs-border
                         shadow text-xs text-vs-muted">
@@ -94,19 +124,37 @@ export function SandpackPreview({ showEditor = false }: Props): React.ReactNode 
         template="react-ts"
         theme={isDark ? "dark" : "light"}
       >
-        <SandpackLayout style={{ height: "100%", borderRadius: 0, border: "none" }}>
-          {showEditor && (
+        <SyncActiveFile />
+        {hidePreview ? (
+          <div className="h-full">
             <SandpackCodeEditor
               showLineNumbers
               showTabs
-              style={{ height: "100%", flex: 1 }}
+              style={{ height: "100%" }}
             />
-          )}
-          <SandpackPreviewPane
-            style={{ height: "100%", flex: showEditor ? 1 : 1 }}
-            showNavigator={false}
-          />
-        </SandpackLayout>
+          </div>
+        ) : (
+          <div className="flex flex-col h-full">
+            <div className="flex-1 min-h-0">
+              <SandpackPreviewPane style={{ height: "100%" }} showNavigator={false} />
+            </div>
+            {showEditor && (
+              <>
+                <Resizer direction="vertical" onDrag={onEditorResize ?? (() => {})} />
+                <div
+                  className="shrink-0 border-t border-vs-border bg-vs-surface"
+                  style={{ height: editorHeight }}
+                >
+                  <SandpackCodeEditor
+                    showLineNumbers
+                    showTabs
+                    style={{ height: "100%" }}
+                  />
+                </div>
+              </>
+            )}
+          </div>
+        )}
       </SandpackProvider>
     </div>
   );
