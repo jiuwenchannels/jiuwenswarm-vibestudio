@@ -33,7 +33,9 @@ const QUICK_ACTIONS: { label: string; prefix: string }[] = [
 export function ChatPanel(): React.ReactNode {
   const [input, setInput] = useState("");
   const [connected, setConnected] = useState(false);
+  const [activeAction, setActiveAction] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const autoSentRef = useRef(false);
 
   const { activeSessionId, persistFiles } = useSessionStore();
@@ -188,8 +190,9 @@ export function ChatPanel(): React.ReactNode {
             case "error":
               updateLastAssistantMessage((m) => ({
                 ...m,
-                content: `Error: ${event.message}`,
+                content: event.message,
                 isStreaming: false,
+                isError: true,
               }));
               setGenerating(false);
               break;
@@ -200,6 +203,7 @@ export function ChatPanel(): React.ReactNode {
           ...m,
           content: `Connection error: ${String(err)}`,
           isStreaming: false,
+          isError: true,
         }));
         setGenerating(false);
       }
@@ -217,7 +221,10 @@ export function ChatPanel(): React.ReactNode {
       e.preventDefault();
       const text = (overrideText ?? input).trim();
       if (!text) return;
-      if (!overrideText) setInput("");
+      if (!overrideText) {
+        setInput("");
+        inputRef.current?.focus();
+      }
       await runGeneration(text);
     },
     [input, runGeneration],
@@ -259,11 +266,12 @@ export function ChatPanel(): React.ReactNode {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialPrompt, activeSessionId, connected]);
 
-  const applyQuickAction = (prefix: string): void => {
+  const applyQuickAction = (label: string, prefix: string): void => {
     setInput((v) => {
       const clean = v.replace(/^(Fix|Explain|Refactor): /i, "");
       return prefix ? `${prefix}${clean}` : clean;
     });
+    setActiveAction((cur) => (cur === label ? null : label));
   };
 
   return (
@@ -309,11 +317,13 @@ export function ChatPanel(): React.ReactNode {
           <button
             key={label}
             type="button"
-            onClick={() => applyQuickAction(prefix)}
+            onClick={() => applyQuickAction(label, prefix)}
             disabled={!activeSessionId}
-            className="text-[11px] px-2.5 py-1 rounded-full border border-vs-border bg-vs-raised
-                       hover:border-brand-500/40 hover:text-vs-text text-vs-muted transition-colors
-                       disabled:opacity-40 disabled:cursor-not-allowed"
+            className={`text-[11px] px-2.5 py-1 rounded-full border transition-colors
+                        disabled:opacity-40 disabled:cursor-not-allowed
+                        ${activeAction === label
+                          ? "bg-brand-500/15 border-brand-500/40 text-brand-300"
+                          : "border-vs-border bg-vs-raised text-vs-muted hover:border-brand-500/40 hover:text-vs-text"}`}
           >
             {label}
           </button>
@@ -328,6 +338,7 @@ export function ChatPanel(): React.ReactNode {
         <div className="rounded-2xl border border-vs-border bg-vs-raised transition-all
                         focus-within:border-brand-500 focus-within:ring-2 focus-within:ring-brand-500/20">
           <textarea
+            ref={inputRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => {
@@ -342,7 +353,7 @@ export function ChatPanel(): React.ReactNode {
                 : "Create or open a project first"
             }
             disabled={!activeSessionId}
-            rows={2}
+            rows={Math.min(8, Math.max(2, input.split("\n").length))}
             className="w-full resize-none bg-transparent px-4 pt-3 text-sm text-vs-text
                        placeholder-vs-muted focus:outline-none disabled:opacity-50
                        disabled:cursor-not-allowed"

@@ -45,6 +45,7 @@ export function MessageBubble({ message, onAnswer }: Props): ReactNode {
   }
 
   const isUser = role === "user";
+  const isError = message.isError;
 
   return (
     <div className={`flex ${isUser ? "justify-end" : "justify-start"} px-4 py-1.5`}>
@@ -53,9 +54,16 @@ export function MessageBubble({ message, onAnswer }: Props): ReactNode {
           "max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap break-words shadow-sm",
           isUser
             ? "bg-gradient-to-br from-brand-500 to-brand-700 text-white rounded-br-md"
-            : "bg-vs-raised text-vs-text rounded-bl-md border border-vs-border-light",
+            : isError
+              ? "bg-rose-500/10 text-rose-300 border border-rose-500/30 rounded-bl-md"
+              : "bg-vs-raised text-vs-text rounded-bl-md border border-vs-border-light",
         ].join(" ")}
       >
+        {isError && (
+          <span className="block text-[10px] font-semibold uppercase tracking-wider text-rose-400 mb-0.5">
+            Error
+          </span>
+        )}
         {content}
         {isStreaming && (
           <span className="inline-block w-0.5 h-4 bg-vs-muted ml-0.5 animate-pulse align-middle" />

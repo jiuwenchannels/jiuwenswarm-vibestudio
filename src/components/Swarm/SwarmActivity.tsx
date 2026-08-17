@@ -116,6 +116,12 @@ export function SwarmActivity(): ReactNode {
           {generation.isGenerating && (
             <span className="w-1.5 h-1.5 rounded-full bg-brand-500 animate-pulse" />
           )}
+          {!generation.isGenerating && stepCount > 0 && (
+            <span
+              className="w-1.5 h-1.5 rounded-full bg-emerald-500"
+              title="Last generation complete"
+            />
+          )}
           {stepCount > 0 && (
             <span className="text-[10px] font-medium text-vs-muted bg-vs-raised border border-vs-border-light rounded-full px-2 py-0.5 leading-none">
               {stepCount} steps

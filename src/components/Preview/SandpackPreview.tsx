@@ -58,24 +58,40 @@ function SyncActiveFile(): null {
 
 type PreviewState =
   | { kind: "loading" }
-  | { kind: "ready"; bundle: string }
+  | { kind: "ready"; srcdoc: string }
   | { kind: "error"; message: string };
 
+function wrapBundle(bundle: string): string {
+  return (
+    '<!DOCTYPE html><html><head><meta charset="utf-8" /><style>html,body,#root{height:100%;margin:0;}</style></head><body><div id="root"></div><script>' +
+    bundle +
+    "</scr" +
+    "ipt></body></html>"
+  );
+}
+
 /**
- * Offline live preview. POSTs the project files to the dev server, which
- * bundles them with esbuild (resolving React from local node_modules), then
- * runs the returned IIFE bundle inside an iframe.
+ * Offline live preview. React projects are POSTed to the dev server and
+ * bundled with esbuild (resolving React from local node_modules); static
+ * HTML projects are rendered directly with their assets inlined. The result
+ * runs inside an iframe — no internet needed.
  */
 function OfflinePreview({
   files,
   entry,
+  staticHtml,
 }: {
   files: Record<string, string>;
   entry: string;
+  staticHtml?: string;
 }): ReactNode {
   const [state, setState] = useState<PreviewState>({ kind: "loading" });
 
   useEffect(() => {
+    if (staticHtml != null) {
+      setState({ kind: "ready", srcdoc: staticHtml });
+      return;
+    }
     let cancelled = false;
     setState({ kind: "loading" });
     void (async () => {
@@ -90,7 +106,7 @@ function OfflinePreview({
           throw new Error(detail || `Bundle failed (HTTP ${res.status})`);
         }
         const bundle = await res.text();
-        if (!cancelled) setState({ kind: "ready", bundle });
+        if (!cancelled) setState({ kind: "ready", srcdoc: wrapBundle(bundle) });
       } catch (err) {
         if (!cancelled) setState({ kind: "error", message: String(err) });
       }
@@ -98,7 +114,7 @@ function OfflinePreview({
     return () => {
       cancelled = true;
     };
-  }, [files, entry]);
+  }, [files, entry, staticHtml]);
 
   if (state.kind === "loading") {
     return (
@@ -124,13 +140,7 @@ function OfflinePreview({
     );
   }
 
-  const html =
-    '<!DOCTYPE html><html><head><meta charset="utf-8" /><style>html,body,#root{height:100%;margin:0;}</style></head><body><div id="root"></div><script>' +
-    state.bundle +
-    "</scr" +
-    "ipt></body></html>";
-
-  return <iframe title="Preview" className="h-full w-full border-0 bg-white" srcDoc={html} />;
+  return <iframe title="Preview" className="h-full w-full border-0 bg-white" srcDoc={state.srcdoc} />;
 }
 
 /** Minimal placeholder shown before the first generation. */
@@ -202,6 +212,105 @@ const SUPPORT_FILES: Record<string, { code: string; hidden: boolean }> = {
   },
 };
 
+/** Conventional component entry points, in preference order. */
+const APP_CANDIDATES = [
+  "/src/App.tsx",
+  "/src/App.jsx",
+  "/App.tsx",
+  "/App.jsx",
+  "/src/App.ts",
+  "/src/App.js",
+  "/App.ts",
+  "/App.js",
+];
+
+/** Find a runnable React component to mount, or null if there is none. */
+function findAppFile(files: Record<string, unknown>): string | null {
+  for (const p of APP_CANDIDATES) if (p in files) return p;
+  // Fall back to any .tsx/.jsx file (best effort).
+  return Object.keys(files).find((p) => /\.(tsx|jsx)$/.test(p)) ?? null;
+}
+
+/** Relative import specifier from `/index.tsx` to an absolute app path. */
+function importSpecifier(appFile: string): string {
+  const rel = appFile.replace(/^\//, "").replace(/\.(tsx|jsx|ts|js)$/, "");
+  return `./${rel}`;
+}
+
+/** Conventional HTML entry points, in preference order. */
+const HTML_CANDIDATES = ["/index.html", "/public/index.html", "/src/index.html"];
+
+function findHtmlFile(files: Record<string, unknown>): string | null {
+  for (const p of HTML_CANDIDATES) if (p in files) return p;
+  return Object.keys(files).find((p) => /\.html?$/.test(p)) ?? null;
+}
+
+/** Entry that renders a friendly message when the project has no component. */
+function placeholderEntry(files: string[]): string {
+  const list = JSON.stringify(files);
+  return `const root = document.getElementById("root");
+if (root) {
+  const files = ${list};
+  root.innerHTML = '<div style="height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;font-family:system-ui,sans-serif;color:#6b7280;text-align:center;padding:0 24px"><p style="font-size:1.5rem;margin:0">No runnable app yet</p><p style="font-size:0.875rem;margin:0;max-width:360px">Ask the swarm to build a React component (e.g. src/App.tsx) or an index.html, and a live preview will appear here.</p><p style="font-size:0.75rem;margin:0;color:#9ca3af;word-break:break-all">Files: ' + files.join(", ") + '</p></div>';
+}`;
+}
+
+/**
+ * Inline a static HTML page's local assets (`<link rel="stylesheet">` and
+ * `<script src>`), resolving relative paths against the project file map.
+ */
+function inlineHtml(
+  htmlPath: string,
+  html: string,
+  files: Record<string, string>,
+): string {
+  const baseDir = htmlPath.replace(/\/[^/]*$/, "");
+
+  const resolve = (ref: string): string | null => {
+    if (/^(https?:|data:|#|\/\/)/.test(ref)) return null;
+    const clean = ref.split(/[?#]/)[0];
+    const joined = (baseDir ? `${baseDir}/` : "") + clean;
+    const parts = joined.split("/");
+    const stack: string[] = [];
+    for (const p of parts) {
+      if (p === "" || p === ".") continue;
+      if (p === "..") stack.pop();
+      else stack.push(p);
+    }
+    const key = `/${stack.join("/")}`;
+    return files[key] ?? null;
+  };
+
+  let out = html;
+
+  // <link rel="stylesheet" href="x.css"> → <style>…</style>
+  out = out.replace(
+    /<link\b[^>]*\brel=["']?stylesheet["']?[^>]*\bhref=["']([^"']+)["'][^>]*\/?>/gi,
+    (tag, href: string) => {
+      const css = resolve(href);
+      return css !== null ? `<style>${css}</style>` : tag;
+    },
+  );
+
+  // <script src="x.js"></script> and <script src="x.js" /> → inline
+  out = out.replace(
+    /<script\b[^>]*\bsrc=["']([^"']+)["'][^>]*>\s*<\/script>/gi,
+    (tag, src: string) => {
+      const js = resolve(src);
+      return js !== null ? `<script>${js}</script>` : tag;
+    },
+  );
+  out = out.replace(
+    /<script\b[^>]*\bsrc=["']([^"']+)["'][^>]*\/>/gi,
+    (tag, src: string) => {
+      const js = resolve(src);
+      return js !== null ? `<script>${js}</script>` : tag;
+    },
+  );
+
+  return out;
+}
+
 /**
  * Build the full file set for a project (single-file apps get an injected
  * `/index.tsx` entry). Returns the Sandpack file map (for the editor) plus a
@@ -214,22 +323,32 @@ function buildSetup(
   code: Record<string, string>;
   visible: string[];
   entry: string;
+  staticHtml?: string;
 } {
   const sandpack: Record<string, { code: string; hidden?: boolean }> = {};
   for (const [path, code] of Object.entries(projectFiles)) {
     sandpack[path.startsWith("/") ? path : `/${path}`] = { code };
   }
 
-  if (!hasEntry(sandpack)) {
-    const appPath = "/src/App.tsx" in sandpack ? "/src/App.tsx" : "/App.tsx";
-    const importPath = appPath.startsWith("/src/") ? "./src/App" : "./App";
-    sandpack["/index.tsx"] = {
-      code: `import React from "react";
+  const htmlFile = findHtmlFile(sandpack);
+
+  if (!htmlFile && !hasEntry(sandpack)) {
+    const appFile = findAppFile(sandpack);
+    if (appFile) {
+      sandpack["/index.tsx"] = {
+        code: `import React from "react";
 import { createRoot } from "react-dom/client";
-import App from "${importPath}";
+import App from "${importSpecifier(appFile)}";
 
 createRoot(document.getElementById("root")!).render(<App />);`,
-    };
+      };
+    } else {
+      sandpack["/index.tsx"] = {
+        code: placeholderEntry(
+          Object.keys(sandpack).filter((p) => !p.startsWith("/index.")),
+        ),
+      };
+    }
   }
 
   for (const [path, support] of Object.entries(SUPPORT_FILES)) {
@@ -240,7 +359,19 @@ createRoot(document.getElementById("root")!).render(<App />);`,
   for (const [path, file] of Object.entries(sandpack)) code[path] = file.code;
 
   const visible = Object.keys(sandpack).filter((p) => !sandpack[p].hidden);
-  return { sandpack, code, visible, entry: detectEntry(sandpack) };
+
+  let staticHtml: string | undefined;
+  if (htmlFile) {
+    staticHtml = inlineHtml(htmlFile, code[htmlFile], code);
+  }
+
+  return {
+    sandpack,
+    code,
+    visible,
+    entry: htmlFile ?? detectEntry(sandpack),
+    staticHtml,
+  };
 }
 
 export function SandpackPreview({
@@ -295,7 +426,11 @@ export function SandpackPreview({
         ) : (
           <div className="flex flex-col h-full">
             <div className="flex-1 min-h-0">
-              <OfflinePreview files={setup.code} entry={setup.entry} />
+              <OfflinePreview
+                files={setup.code}
+                entry={setup.entry}
+                staticHtml={setup.staticHtml}
+              />
             </div>
             {showEditor && (
               <>

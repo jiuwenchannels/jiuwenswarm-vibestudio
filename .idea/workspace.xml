@@ -5,13 +5,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="3fc1f405-96b4-4e40-b7ea-9e1cf65dbe69" name="Changes" comment="Initial">
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/ARCHITECTURE.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/ARCHITECTURE.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/USER_GUIDE.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/USER_GUIDE.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/components/Chat/ChatPanel.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/Chat/ChatPanel.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/Chat/MessageBubble.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/Chat/MessageBubble.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/components/Preview/SandpackPreview.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/Preview/SandpackPreview.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/lib/client.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/client.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/pages/Studio.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/pages/Studio.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/Swarm/SwarmActivity.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/Swarm/SwarmActivity.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/store/project.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/store/project.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -35,23 +34,23 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.0000005631411846" />
-      <entry key="MS500" value="1.056401872280662" />
-      <entry key="S2" value="1.5980991297755918" />
-      <entry key="S5" value="2.1907972964224105" />
-      <entry key="S10" value="2.670914166590754" />
-      <entry key="S30" value="3.3605014341644908" />
-      <entry key="S60" value="3.643537920441846" />
-      <entry key="M2" value="3.879766210037644" />
-      <entry key="M5" value="5.194528451396097" />
-      <entry key="M10" value="7.340912966991616" />
-      <entry key="M15" value="8.657518832403266" />
-      <entry key="M30" value="10.478633005094187" />
-      <entry key="H1" value="11.645011990821724" />
-      <entry key="H2" value="12.418500891063063" />
-      <entry key="H4" value="13.143750711486271" />
-      <entry key="D1" value="14.529030079846939" />
-      <entry key="W1" value="14.926791950230843" />
+      <entry key="MS100" value="1.3488844554856976" />
+      <entry key="MS500" value="3.1284129864007992" />
+      <entry key="S2" value="4.387962722509937" />
+      <entry key="S5" value="4.740411125612748" />
+      <entry key="S10" value="4.867594907859575" />
+      <entry key="S30" value="4.956044055800588" />
+      <entry key="S60" value="5.1057203225640615" />
+      <entry key="M2" value="7.0957779863538075" />
+      <entry key="M5" value="17.68549946063113" />
+      <entry key="M10" value="28.60187917971547" />
+      <entry key="M15" value="34.37266211377376" />
+      <entry key="M30" value="42.97189885987182" />
+      <entry key="H1" value="50.06434030974933" />
+      <entry key="H2" value="55.24335805890169" />
+      <entry key="H4" value="58.729804216351475" />
+      <entry key="D1" value="62.88412631872673" />
+      <entry key="W1" value="63.83193446166069" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
@@ -73,23 +72,23 @@
       <entry key="W1" value="0.0" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="0.9012509562636145" />
-      <entry key="MS500" value="1.034355144595599" />
-      <entry key="S2" value="1.5888356357177746" />
-      <entry key="S5" value="2.185343864845019" />
-      <entry key="S10" value="2.667453023157001" />
-      <entry key="S30" value="3.35898890165444" />
-      <entry key="S60" value="3.64270740185541" />
-      <entry key="M2" value="3.8793133359551746" />
-      <entry key="M5" value="5.194209261910457" />
-      <entry key="M10" value="7.340626610012287" />
-      <entry key="M15" value="8.657274061242742" />
-      <entry key="M30" value="10.47847259796578" />
-      <entry key="H1" value="11.644919422694878" />
-      <entry key="H2" value="12.418450410517787" />
-      <entry key="H4" value="13.143723422642912" />
-      <entry key="D1" value="14.529024862114182" />
-      <entry key="W1" value="14.926791177147537" />
+      <entry key="MS100" value="1.2689789999717629" />
+      <entry key="MS500" value="3.0890150618408647" />
+      <entry key="S2" value="4.373791765944047" />
+      <entry key="S5" value="4.734255279680606" />
+      <entry key="S10" value="4.8644288936363935" />
+      <entry key="S30" value="4.954968330112897" />
+      <entry key="S60" value="5.10516856022857" />
+      <entry key="M2" value="7.095409188982764" />
+      <entry key="M5" value="17.68514765588283" />
+      <entry key="M10" value="28.60159420116083" />
+      <entry key="M15" value="34.37242677290671" />
+      <entry key="M30" value="42.971729850386055" />
+      <entry key="H1" value="50.064223566124554" />
+      <entry key="H2" value="55.24328505320048" />
+      <entry key="H4" value="58.72976195031722" />
+      <entry key="D1" value="62.884117915367405" />
+      <entry key="W1" value="63.831933212130004" />
     </decayedShown>
   </component>
   <component name="ProjectColorInfo"><![CDATA[{
@@ -138,7 +137,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1786963006711</updated>
-      <workItem from="1786963008374" duration="11714000" />
+      <workItem from="1786963008374" duration="14016000" />
     </task>
     <task id="LOCAL-00001" summary="Initial">
       <option name="closed" value="true" />
@@ -204,7 +203,15 @@
       <option name="project" value="LOCAL" />
       <updated>1786994911793</updated>
     </task>
-    <option name="localTasksCounter" value="9" />
+    <task id="LOCAL-00009" summary="Initial">
+      <option name="closed" value="true" />
+      <created>1786995915834</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1786995915834</updated>
+    </task>
+    <option name="localTasksCounter" value="10" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
