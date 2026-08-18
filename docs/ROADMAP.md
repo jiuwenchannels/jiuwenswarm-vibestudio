@@ -3,29 +3,21 @@
 Each stage is intentionally small-to-medium. Stages within a phase may be
 worked in parallel where dependencies allow.
 
-**Current version: v0.3.1** — Phase 1 complete. Phase 2 core UX complete
-(2.1 templates, 2.2 quick-actions, 2.5 swarm activity, 2.10 mobile layout,
-2.11 chat export, 2.12 reconnect toast). Also shipped: resizable panels,
-HITL in-chat clarification cards, chat message persistence, changed-file
-badges in FileTree, retry button on error bubbles. See `CHANGELOG.md` for full details.
+**Current version: v0.4.0** — Phase 1 complete. Phase 2 core UX complete
+(2.1 templates, 2.2 quick-actions, 2.3+2.4 Monaco editor, 2.5 swarm activity,
+2.10 mobile layout, 2.11 chat export, 2.12 reconnect toast). Also shipped:
+resizable panels, HITL in-chat clarification cards, chat message persistence,
+changed-file badges in FileTree, retry button on error bubbles.
+See `CHANGELOG.md` for full details.
 
 ---
 
 ## Phase 2 — Richer editing and deployment (remaining)
 
-Stage 2.3 — Monaco editor panel (read-only)
-: Lazy-load `@monaco-editor/react`; replace Sandpack's built-in CodeMirror with
-  Monaco for richer syntax highlighting, code folding, and minimap. Tab
-  switcher across generated files.
-
-Stage 2.4 — Monaco editor (editable, sync to store)
-: Allow manual edits in Monaco; debounce updates to the project store;
-  re-render Sandpack preview on change. File-level dirty indicator.
-
 Stage 2.6 — WebContainers preview (Next.js / server-side support)
 : Integrate `@stackblitz/sdk` WebContainers for projects that contain an
-  `api/` or `server/` directory; auto-detect and toggle between Sandpack
-  (client-only) and WebContainers (full Node.js).
+  `api/` or `server/` directory; auto-detect and toggle between offline
+  esbuild (client-only) and WebContainers (full Node.js).
 
 Stage 2.7 — Asset uploader
 : Drag-and-drop image/font/file upload into the Chat panel; base64-encode

@@ -138,15 +138,33 @@ the full agent team) or a targeted change (uses a single fast agent).
 ## Code Toggle (`</> Code`)
 
 By default only the live preview is shown. Click **`</> Code`** in the
-toolbar to reveal:
+toolbar to reveal the Monaco code editor in a resizable drawer at the bottom
+of the preview.
 
-- **File explorer** — lists every generated file in a tree. Click a file to
-  make it active.
-- **Code editor** — shows the source of the active file, inside the preview
-  panel. You can read the generated code but cannot edit it manually yet
-  (editable editor is coming in a future stage).
+### File tabs
 
-Click **`</> Hide code`** to return to the full-width preview.
+All project files appear as tabs at the top of the editor. Click any tab to
+switch to that file. The active tab has a coloured underline. If more tabs
+exist than can fit, the strip scrolls horizontally.
+
+### Editing files
+
+The Monaco editor is fully editable. Changes you make are debounced (800 ms)
+and written back to the project — the **live preview rebuilds automatically**
+after your edit settles. No prompt needed for small tweaks.
+
+A small dot (●) appears on a tab while its file has unsaved changes. The dot
+disappears once the 800 ms write completes. If the swarm regenerates a file
+you were editing, Monaco updates to show the generated version and the dirty
+dot is cleared.
+
+### File list
+
+Click the **Files** button in the top-right corner of the editor to toggle a
+collapsible file tree beside the editor. Clicking a file in the tree switches
+to that tab.
+
+Click **`</> Code`** again to hide the drawer and return to the full-width preview.
 
 ---
 
@@ -315,9 +333,9 @@ workspace:
 
 | Tab | Content |
 |---|---|
-| **Chat** | Full-screen chat panel |
+| **Chat** | Full-screen chat panel (includes inline swarm activity) |
 | **Preview** | Full-screen live preview |
-| **Swarm** | Agent activity log (visible only when Swarm is enabled) |
+| **Code** | Full-screen Monaco editor (all file tabs, editable) |
 
 All toolbar buttons remain accessible at the top of the screen.
 
@@ -344,9 +362,9 @@ resumes.
   retries automatically with exponential back-off.
 
 **Preview stays blank after generation**
-: The generated app may have an error. Click **`</> Code`** to open the
-  Sandpack editor — it shows any compilation errors in the console at the
-  bottom.
+: The generated app may have a build error. Click **`</> Code`** to open the
+  Monaco editor and inspect the generated files. The preview panel shows
+  "Preview failed to build" with the esbuild error message when bundling fails.
 
 **Generation takes a very long time**
 : Team mode (used for "generate" intent) runs multiple agents in sequence.

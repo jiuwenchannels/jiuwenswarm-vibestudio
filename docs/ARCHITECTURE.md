@@ -4,8 +4,8 @@
 
 VibeStudio is a browser-based vibe-coding environment. The user describes
 what they want to build; JiuwenSwarm's multi-agent team generates the React +
-TypeScript source files; Sandpack renders a live in-browser preview —
-all without a VibeStudio backend.
+TypeScript source files; an offline esbuild bundler renders a live preview in
+an iframe — all without a VibeStudio backend.
 
 ```
 Browser
@@ -13,8 +13,8 @@ Browser
 │  VibeStudio SPA  (React + Vite)                              │
 │                                                              │
 │  ┌──────────┐  ┌────────────────┐  ┌────────────────────┐   │
-│  │ Chat /   │  │ Stream parser  │  │ Sandpack preview   │   │
-│  │ Prompt   │→ │ @@FILE: proto  │→ │ (iframe sandbox)   │   │
+│  │ Chat /   │  │ Stream parser  │  │ Offline preview    │   │
+│  │ Prompt   │→ │ @@FILE: proto  │→ │ (esbuild → iframe) │   │
 │  └──────────┘  └────────────────┘  └────────────────────┘   │
 │        │                                                     │
 │  @jiuwenswarm/sdk  (WebSocket)                               │
@@ -54,7 +54,9 @@ jiuwenswarm-vibestudio/
 │   │   │   ├── ChatPanel.tsx      # Prompt input + streaming message list + quick-actions
 │   │   │   └── MessageBubble.tsx  # User / assistant / status bubbles
 │   │   ├── Preview/
-│   │   │   └── SandpackPreview.tsx # Live preview (+ optional code editor)
+│   │   │   └── SandpackPreview.tsx # Live preview shell (OfflinePreview + MonacoEditorPanel)
+│   │   ├── Editor/
+│   │   │   └── MonacoEditorPanel.tsx # Lazy Monaco editor: tabs, dirty indicator, store sync
 │   │   ├── FileExplorer/
 │   │   │   └── FileTree.tsx       # Nested file tree (toggleable)
 │   │   ├── Swarm/
@@ -90,13 +92,15 @@ SessionState
 │   ├── title        — project name
 │   ├── createdAt    — ISO timestamp
 │   ├── description  — first prompt (truncated)
-│   └── files        — last-known generated file map (survives reload)
+│   ├── files        — last-known generated file map (survives reload)
+│   └── messages     — last-known chat messages (PersistedMessage[], survives reload)
 └── activeSessionId: string | null
 ```
 
 Key actions:
 - `addProject` / `removeProject` / `renameProject`
 - `persistFiles(sessionId, files)` — called after each generation to save files
+- `persistMessages(sessionId, messages)` — called after each generation to save chat
 - `setActive` / `activeProject`
 
 ### `store/project.ts` — in-memory only
@@ -108,6 +112,8 @@ to a different project.
 ProjectState
 ├── files: Record<path, source>    — generated file map
 ├── activeFile: string | null      — selected in file tree / editor
+├── changedFiles: Set<string>      — paths modified in last generation (dot badge)
+├── messages: ChatMessage[]        — chat conversation
 ├── generation: GenerationState
 │   ├── isGenerating: boolean
 │   ├── activeAgent: string | null — current agent name (from status events)
@@ -119,8 +125,11 @@ ProjectState
 
 Key actions:
 - `applyDeltas(deltas)` — merge file changes from the stream parser
+- `updateFile(path, content)` — apply a single manual edit (does not touch `changedFiles`)
 - `loadFiles(files)` — restore a full file map (used on session re-open)
-- `snapshotForRewind()` — saves current files before a new generation
+- `loadMessages(messages)` — restore chat messages (used on session re-open)
+- `setChangedFiles(paths)` — mark files as changed by the last generation
+- `snapshotForRewind()` — saves current files before a new generation; clears `changedFiles`
 - `pushRewindable(msgId)` — creates a rewind entry from the pending snapshot
 - `popRewindSnapshot()` — pops the latest entry, returns its file snapshot
 - `restoreSnapshot(snapshot)` — replaces files with a saved snapshot
@@ -197,8 +206,9 @@ accumulated response for these sentinels and returns:
 
 `FileDelta` is `{ action: "upsert" | "delete", path: string, content: string }`.
 
-`applyDeltas(deltas)` in the project store merges them into the live file map,
-which Sandpack picks up and re-renders.
+`applyDeltas(deltas)` in the project store merges them into the live file map.
+`SandpackPreview.buildSetup()` recomputes via `useMemo`, `OfflinePreview`'s
+`useEffect` fires, and the offline bundler re-bundles and re-renders the preview.
 
 ---
 
@@ -244,33 +254,69 @@ Tailwind color tokens (`bg-vs-bg`, `text-vs-text`, etc.) reference these
 variables. The `dark` class on `<html>` triggers the switch instantly via CSS
 cascade — no React re-render needed.
 
-The Sandpack component uses its built-in `theme="dark"` / `theme="light"` prop
-(passed based on `useThemeStore().isDark`) because Sandpack's internal editor
-renders inside an iframe and cannot inherit parent CSS variables.
+The Monaco editor uses its built-in `theme="vs-dark"` / `theme="light"` prop
+(passed based on `useThemeStore().isDark`) because Monaco renders on a canvas
+and cannot inherit CSS variables directly.
 
 ---
 
-## Sandpack Integration
+## Monaco Editor (Stages 2.3 + 2.4)
 
-`SandpackPreview` wraps Sandpack's individual primitives rather than the
-all-in-one `<Sandpack>` component, so the code editor can be shown or hidden
-without remounting the preview:
+`components/Editor/MonacoEditorPanel.tsx` — lazy-loaded via `React.lazy` so
+the ~4 MB Monaco bundle is only fetched when the code drawer is first opened.
 
-```tsx
-<SandpackProvider files={...} template="react-ts" theme={...}>
-  <SandpackLayout>
-    {showEditor && <SandpackCodeEditor showLineNumbers showTabs />}
-    <SandpackPreviewPane showNavigator={false} />
-  </SandpackLayout>
-</SandpackProvider>
+### Architecture
+
+```
+MonacoEditorPanel
+├── Tab strip (scrollable)         — one tab per user file, dirty dot (●)
+├── Monaco Editor (lazy)           — full syntax highlighting, minimap, folding
+│   ├── key={activeSlash}          — remounts when active file switches
+│   ├── defaultValue={storeContent}— initial content from project store
+│   ├── onChange (debounced 800ms) — writes to project store → preview rebuilds
+│   └── onMount                   — captures editor instance ref
+└── FileTree toggle                — collapsible file tree beside the editor
 ```
 
-- `showEditor = false` (default): preview pane takes full width.
-- `showEditor = true` (Code button active): Sandpack native split.
+### Edit → Preview loop
 
-The live preview pane runs in an isolated iframe. Its background colour and
-styling come entirely from the generated app's own CSS — they cannot be
-controlled by VibeStudio's theme.
+```
+User types in Monaco
+      ↓ (800 ms debounce)
+updateFile(path, content)  →  files in project store updates
+      ↓
+SandpackPreview.buildSetup(files) recomputes (useMemo)
+      ↓
+OfflinePreview useEffect fires  →  POST /api/preview  →  iframe refreshes
+```
+
+### Generation overwrite safety
+
+When the swarm regenerates a file the user was editing:
+
+```
+applyDeltas() → files[path] changes in store
+      ↓
+MonacoEditorPanel useEffect: storeContent !== prevStoreContentRef
+      ↓
+suppressChangeRef.current = true
+editor.setValue(newContent)           ← editor updates
+suppressChangeRef.current = false     ← onChange will be suppressed
+dirty dot cleared for this file
+```
+
+### Pending-flush on file switch
+
+The `useEffect(() => { return () => { flush() }; }, [activeFile])` cleanup
+runs when `activeFile` changes: it clears the debounce timer and immediately
+calls `updateFile` with the latest typed value, so no edits are lost when
+switching files.
+
+### Language detection
+
+File extension → Monaco language id:
+`ts/tsx → typescript`, `js/jsx → javascript`, `css/scss/less → css`,
+`html/htm → html`, `json → json`, `md → markdown`, `py → python`, `sh → shell`.
 
 ---
 
@@ -283,11 +329,18 @@ Generated files are stored in two places:
 | `store/project.ts` (memory) | Until page reload | Live editing, rewind stack |
 | `store/session.ts` (localStorage) | Permanent | Restore files on re-open |
 
-After every successful generation, `ChatPanel` calls
-`persistFiles(sessionId, updatedFiles)` which writes the file map into the
-matching `ProjectMeta` entry. On `Studio` mount, `loadFiles()` restores them
-from localStorage into the project store so the Sandpack preview re-appears
-without needing to re-generate.
+After every successful generation, `ChatPanel` calls:
+- `persistFiles(sessionId, updatedFiles)` — writes the file map into the matching `ProjectMeta`.
+- `persistMessages(sessionId, finalMsgs)` — writes the completed chat messages.
+
+On `Studio` mount, `loadFiles()` and `loadMessages()` restore both from
+localStorage so the preview and conversation both re-appear without
+re-generating.
+
+Manual edits via Monaco are written immediately to the in-memory store (via
+`updateFile`) and trigger a preview rebuild, but are NOT separately persisted
+to localStorage — they become part of `files` which IS persisted on the next
+generation.
 
 ---
 
@@ -408,14 +461,13 @@ The preview is the hero surface. `Studio` renders, in order:
 3. The **preview column** (`flex-1`) containing `SandpackPreview`. The live
    preview is bundled offline by the dev server (`POST /api/preview` → esbuild)
    and rendered in an iframe. When the code drawer is open, it is a vertical
-   split: the live preview on top and a resizable drawer beneath it that shows
-   `FileTree` and `SandpackCodeEditor` side by side. The drawer height is
-   persisted (`codeHeight`, clamped to `[200, 560]`) and adjusted via a second
-   `Resizer`.
+   split: the live preview on top and a resizable `MonacoEditorPanel` drawer
+   beneath it. The drawer height is persisted (`codeHeight`, clamped to
+   `[200, 560]`) and adjusted via a second `Resizer`.
 
-`FileTree` calls `setActiveFile`; `SyncActiveFile` (inside the Sandpack
-provider) bridges that store value into Sandpack's editor, so clicking a file
-in the tree opens it in the editor.
+Clicking a file in `FileTree` or a tab in `MonacoEditorPanel` calls
+`setActiveFile`; Monaco remounts with the new file's content (keyed on
+`activeSlash`).
 
 Sizes persist via the `"vs-layout"` localStorage key (`store/layout.ts`).
 
@@ -427,4 +479,4 @@ Sizes persist via the `"vs-layout"` localStorage key (`store/layout.ts`).
 |---|---|
 | Chat | Full-height `ChatPanel` (including inline swarm activity) |
 | Preview | Full-height `SandpackPreview` |
-| Code | `SandpackPreview` with `showEditor` + `hidePreview` (file tree + editor) |
+| Code | `SandpackPreview` with `hidePreview` — full-height `MonacoEditorPanel` |

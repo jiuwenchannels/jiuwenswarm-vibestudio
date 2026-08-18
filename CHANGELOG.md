@@ -5,6 +5,37 @@ Follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format.
 
 ---
 
+## [0.4.0] — Monaco editor (Stages 2.3 + 2.4)
+
+### Added
+- **Monaco editor** (Stages 2.3 + 2.4) — `@monaco-editor/react` lazy-loaded
+  on first open, replacing the former Sandpack CodeMirror editor. Ships with
+  syntax highlighting for TypeScript, JavaScript, CSS, HTML, JSON, Markdown,
+  Python, and Shell; minimap; code folding; light/dark theme sync.
+- **Scrollable file tab strip** — `MonacoEditorPanel` renders all project
+  files as tabs above the editor; active tab has an underline accent;
+  horizontal scroll for projects with many files.
+- **Dirty indicator** — Tabs show a small brand-coloured dot (●) while the
+  file has unsaved local edits; dot disappears after the 800 ms debounce
+  writes the change to the project store, which triggers a preview rebuild.
+- **Live preview sync on manual edits** — `updateFile(path, content)` action
+  in the project store updates `files`, which causes `OfflinePreview` to
+  rebundle automatically; no generation required for small tweaks.
+- **Generation-overwrite safety** — If the swarm regenerates a file you were
+  editing, the editor imperatively updates its content (via `editor.setValue`)
+  with change suppression so the Monaco `onChange` callback is not triggered.
+  The dirty dot is cleared to reflect the overwrite.
+- **Pending-flush on file switch** — Any debounced edit is immediately written
+  to the store before the editor switches to a new file, preventing data loss.
+
+### Removed
+- **`@codesandbox/sandpack-react`** — no longer a dependency; 48 packages
+  removed, reducing the install footprint by ~12 MB. `SandpackProvider`,
+  `SandpackCodeEditor`, `useSandpack`, and `SyncActiveFile` are gone. The
+  offline preview (`OfflinePreview`) was always custom and is unchanged.
+
+---
+
 ## [0.3.1] — UX polish
 
 ### Added

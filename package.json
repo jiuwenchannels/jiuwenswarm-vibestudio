@@ -1,6 +1,6 @@
 {
   "name": "jiuwenswarm-vibestudio",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "private": true,
   "description": "VibeStudio — build apps through conversation, powered by JiuwenSwarm",
   "type": "module",
@@ -15,8 +15,8 @@
     "lint": "tsc --noEmit"
   },
   "dependencies": {
-    "@codesandbox/sandpack-react": "^2.18.0",
     "@jiuwenswarm/sdk": "file:../jiuwenswarm-sdk/packages/sdk",
+    "@monaco-editor/react": "^4.7.0",
     "fflate": "^0.8.3",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

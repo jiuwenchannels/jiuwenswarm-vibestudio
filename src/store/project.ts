@@ -87,6 +87,8 @@ interface ProjectState {
   setActiveFile: (path: string | null) => void;
   loadFiles: (files: Record<string, string>) => void;
   setChangedFiles: (paths: string[]) => void;
+  /** Update a single file's content (user manual edit — does not touch changedFiles). */
+  updateFile: (path: string, content: string) => void;
 
   // --- Chat actions ---
   addChatMessage: (msg: ChatMessage) => void;
@@ -167,6 +169,9 @@ export const useProjectStore = create<ProjectState>()((set, get) => ({
 
   setChangedFiles: (paths) =>
     set({ changedFiles: new Set(paths.map((p) => p.replace(/^\//, ""))) }),
+
+  updateFile: (path, content) =>
+    set((s) => ({ files: { ...s.files, [path]: content } })),
 
   // --- Chat ---
 
