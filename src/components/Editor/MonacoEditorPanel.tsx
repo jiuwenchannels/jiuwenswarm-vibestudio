@@ -18,6 +18,7 @@ import { lazy, Suspense, useCallback, useEffect, useRef, useState, type ReactNod
 import type { OnChange, OnMount } from "@monaco-editor/react";
 import type { editor } from "monaco-editor";
 import { useProjectStore } from "../../store/project";
+import { useSessionStore } from "../../store/session";
 import { useThemeStore } from "../../store/theme";
 import { FileTree } from "../FileExplorer/FileTree";
 
@@ -69,6 +70,9 @@ export function MonacoEditorPanel(): ReactNode {
   const updateFile = useProjectStore((s) => s.updateFile);
   const isDark     = useThemeStore((s) => s.isDark);
 
+  const persistFiles    = useSessionStore((s) => s.persistFiles);
+  const activeSessionId = useSessionStore((s) => s.activeSessionId);
+
   const [dirtyFiles, setDirtyFiles] = useState<Set<string>>(new Set());
   const [showTree, setShowTree]     = useState(false);
 
@@ -80,12 +84,16 @@ export function MonacoEditorPanel(): ReactNode {
   const tabBarRef         = useRef<HTMLDivElement>(null);
 
   // Keep refs in sync so the stable callbacks always see current values.
-  const activeFileRef  = useRef(activeFile);
-  const filesRef       = useRef(files);
-  const updateFileRef  = useRef(updateFile);
-  useEffect(() => { activeFileRef.current  = activeFile; },  [activeFile]);
-  useEffect(() => { filesRef.current       = files; },       [files]);
-  useEffect(() => { updateFileRef.current  = updateFile; },  [updateFile]);
+  const activeFileRef     = useRef(activeFile);
+  const filesRef          = useRef(files);
+  const updateFileRef     = useRef(updateFile);
+  const persistFilesRef   = useRef(persistFiles);
+  const activeSessionIdRef = useRef(activeSessionId);
+  useEffect(() => { activeFileRef.current      = activeFile; },      [activeFile]);
+  useEffect(() => { filesRef.current           = files; },           [files]);
+  useEffect(() => { updateFileRef.current      = updateFile; },      [updateFile]);
+  useEffect(() => { persistFilesRef.current    = persistFiles; },    [persistFiles]);
+  useEffect(() => { activeSessionIdRef.current = activeSessionId; }, [activeSessionId]);
 
   // Derived keys from activeFile.
   const { slashKey: activeSlash, rawKey: activeRaw } = activeFile
@@ -167,6 +175,8 @@ export function MonacoEditorPanel(): ReactNode {
 
     const doFlush = () => {
       updateFileRef.current(storeKey, capturedValue);
+      const sid = activeSessionIdRef.current;
+      if (sid) persistFilesRef.current(sid, useProjectStore.getState().files);
       prevStoreContentRef.current = capturedValue;
       setDirtyFiles((prev) => {
         const n = new Set(prev);

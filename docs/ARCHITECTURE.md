@@ -338,9 +338,9 @@ localStorage so the preview and conversation both re-appear without
 re-generating.
 
 Manual edits via Monaco are written immediately to the in-memory store (via
-`updateFile`) and trigger a preview rebuild, but are NOT separately persisted
-to localStorage — they become part of `files` which IS persisted on the next
-generation.
+`updateFile`) and trigger a preview rebuild. Each flush also calls
+`persistFiles` so the edit is written to localStorage straight away — manual
+edits survive a page reload without requiring a new generation.
 
 ---
 
