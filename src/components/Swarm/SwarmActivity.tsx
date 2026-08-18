@@ -27,12 +27,14 @@ const AGENT_STYLES: Record<string, { pill: string; dot: string }> = {
 
 const FALLBACK_STYLE = { pill: "bg-vs-raised text-vs-muted border-vs-border", dot: "bg-vs-muted" };
 
-function formatTime(ts: number): string {
-  const d = new Date(ts);
-  const hh = d.getHours().toString().padStart(2, "0");
-  const mm = d.getMinutes().toString().padStart(2, "0");
-  const ss = d.getSeconds().toString().padStart(2, "0");
-  return `${hh}:${mm}:${ss}`;
+function formatRelative(ts: number): string {
+  const s = Math.max(0, Math.round((Date.now() - ts) / 1000));
+  if (s < 5) return "just now";
+  if (s < 60) return `${s}s ago`;
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  return `${h}h ago`;
 }
 
 interface ParsedEntry {
@@ -90,8 +92,10 @@ export function SwarmActivity(): ReactNode {
     });
   };
 
-  const stepCount = agentLog.length;
-  const agentCount = new Set(agentLog.filter((e) => e.agent).map((e) => e.agent)).size;
+  // Hide trivial "Thinking…" noise so the timeline stays meaningful.
+  const entries = agentLog.filter((e) => e.status !== "Thinking…");
+  const stepCount = entries.length;
+  const agentCount = new Set(entries.filter((e) => e.agent).map((e) => e.agent)).size;
 
   return (
     <div className="border-t border-vs-border shrink-0">
@@ -135,7 +139,7 @@ export function SwarmActivity(): ReactNode {
       {/* Body — only when expanded */}
       {open && stepCount > 0 && (
         <div className="max-h-56 overflow-y-auto px-4 pb-3 space-y-1 text-xs border-t border-vs-border-light pt-2">
-          {agentLog.map((entry, i) => {
+          {entries.map((entry, i) => {
             const parsed = classify(entry);
             const id = `${entry.time}-${i}`;
             const isExpanded = expanded.has(id);
@@ -155,7 +159,7 @@ export function SwarmActivity(): ReactNode {
             return (
               <div key={id} className="flex gap-2.5 py-0.5">
                 <span className="text-vs-faint shrink-0 select-none tabular-nums leading-5">
-                  {formatTime(entry.time)}
+                  {formatRelative(entry.time)}
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5 flex-wrap">

@@ -13,11 +13,11 @@
   --vs-bg:           247 249 252;   /* near-white page background          */
   --vs-surface:      255 255 255;   /* white      — panel / card surface   */
   --vs-raised:       243 245 249;   /* slate-100  — hover, button bg       */
-  --vs-border:       226 231 239;   /* slate-200  — primary borders        */
-  --vs-border-light: 238 241 246;   /* slate-100  — subtle dividers        */
+  --vs-border:       222 227 235;   /* slate-200  — primary borders        */
+  --vs-border-light: 233 237 243;   /* slate-100  — subtle dividers        */
   --vs-text:          17  24  39;   /* slate-900  — primary text           */
-  --vs-muted:        100 116 139;   /* slate-500  — secondary / placeholder */
-  --vs-faint:        148 163 184;   /* slate-400  — disabled / hint text   */
+  --vs-muted:         90 106 130;   /* slate-500  — secondary / placeholder */
+  --vs-faint:        133 145 163;   /* slate-400  — disabled / hint text   */
 }
 
 .dark {
@@ -78,6 +78,18 @@ body {
 }
 *::-webkit-scrollbar-track {
   background: transparent;
+}
+
+/* Respect users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* Sandpack takes the full height of its container */

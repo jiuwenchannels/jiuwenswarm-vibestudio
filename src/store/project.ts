@@ -81,6 +81,8 @@ interface ProjectState {
 
   // Optional prompt injected by the template picker; cleared after first send
   initialPrompt: string | null;
+  /** A prompt set by another component (e.g. "fix this error") for ChatPanel to send. */
+  pendingPrompt: string | null;
 
   // --- File actions ---
   applyDeltas: (deltas: FileDelta[]) => void;
@@ -114,6 +116,7 @@ interface ProjectState {
 
   // --- Template ---
   setInitialPrompt: (prompt: string | null) => void;
+  setPendingPrompt: (prompt: string | null) => void;
 
   resetProject: () => void;
 }
@@ -142,6 +145,7 @@ export const useProjectStore = create<ProjectState>()((set, get) => ({
   rewindStack: [],
   _pendingSnapshot: null,
   initialPrompt: null,
+  pendingPrompt: null,
 
   // --- Files ---
 
@@ -250,6 +254,8 @@ export const useProjectStore = create<ProjectState>()((set, get) => ({
 
   setInitialPrompt: (prompt) => set({ initialPrompt: prompt }),
 
+  setPendingPrompt: (prompt) => set({ pendingPrompt: prompt }),
+
   // --- Reset ---
 
   resetProject: () =>
@@ -263,5 +269,6 @@ export const useProjectStore = create<ProjectState>()((set, get) => ({
       rewindStack: [],
       _pendingSnapshot: null,
       initialPrompt: null,
+      pendingPrompt: null,
     }),
 }));

@@ -104,9 +104,19 @@ function OfflinePreview({
         <div className="max-w-md text-center text-sm">
           <p className="font-semibold text-vs-text mb-1">Preview failed to build</p>
           <p className="text-vs-muted break-words">{state.message}</p>
+          <button
+            onClick={() =>
+              useProjectStore.getState().setPendingPrompt(
+                `The preview failed to build with this error:\n${state.message}\n\nPlease fix the code and rebuild.`,
+              )
+            }
+            className="mt-4 px-4 py-2 rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-xs font-medium transition-colors"
+          >
+            Ask the swarm to fix
+          </button>
           <p className="mt-3 text-xs text-vs-faint">
             The preview builds locally, so this is a code error — not a network
-            issue. Ask the swarm to fix it.
+            issue.
           </p>
         </div>
       </div>

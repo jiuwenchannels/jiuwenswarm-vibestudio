@@ -23,6 +23,12 @@ import { useSessionStore } from "../../store/session";
 let _msgCounter = 0;
 const uid = (): string => `msg-${++_msgCounter}`;
 
+const EXAMPLES = [
+  "Build a to-do app with drag-and-drop and dark mode",
+  "Create a landing page with a hero and pricing",
+  "Make a counter with +1 and −1 buttons",
+];
+
 export function ChatPanel(): React.ReactNode {
   const [input, setInput] = useState("");
   const [connected, setConnected] = useState(false);
@@ -40,6 +46,7 @@ export function ChatPanel(): React.ReactNode {
     appendAgentLog,
     setChangedFiles,
     initialPrompt, setInitialPrompt,
+    pendingPrompt, setPendingPrompt,
   } = useProjectStore();
 
   // Connect and listen for lifecycle events.
@@ -275,6 +282,14 @@ export function ChatPanel(): React.ReactNode {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialPrompt, activeSessionId, connected]);
 
+  // Send prompts injected by other components (e.g. "fix this error").
+  useEffect(() => {
+    if (!pendingPrompt || !activeSessionId) return;
+    const prompt = pendingPrompt;
+    setPendingPrompt(null);
+    void runGeneration(prompt);
+  }, [pendingPrompt, activeSessionId, runGeneration]);
+
   return (
     <div className="flex flex-col h-full bg-vs-surface">
       {/* Connection indicator */}
@@ -300,6 +315,21 @@ export function ChatPanel(): React.ReactNode {
                 Describe your app in plain language. The swarm writes the code
                 and shows a live preview.
               </p>
+            </div>
+            <div className="flex flex-wrap gap-2 justify-center max-w-md">
+              {EXAMPLES.map((ex) => (
+                <button
+                  key={ex}
+                  onClick={() => {
+                    setInput(ex);
+                    inputRef.current?.focus();
+                  }}
+                  className="text-xs px-3 py-1.5 rounded-full border border-vs-border bg-vs-raised
+                             text-vs-muted hover:text-vs-text hover:border-brand-500/40 transition-colors"
+                >
+                  {ex}
+                </button>
+              ))}
             </div>
           </div>
         )}
