@@ -52,6 +52,12 @@ body {
   background: rgb(76 110 245 / 0.25);
 }
 
+/* Consistent, visible keyboard focus ring across the app */
+:focus-visible {
+  outline: 2px solid rgb(76 110 245 / 0.7);
+  outline-offset: 2px;
+}
+
 /* Thin, theme-aware scrollbars everywhere */
 * {
   scrollbar-width: thin;

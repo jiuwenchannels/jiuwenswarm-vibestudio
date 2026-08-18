@@ -65,8 +65,18 @@ function StudioInner(): React.ReactNode {
   const [renameValue, setRenameValue] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const prevGeneratingRef = useRef(false);
+  const autoOpenedCodeRef = useRef(false);
+  const [toast, setToast] = useState<string | null>(null);
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Close the "more" menu when clicking outside it.
+  const showToast = (message: string): void => {
+    setToast(message);
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    toastTimerRef.current = setTimeout(() => setToast(null), 2500);
+  };
+
+  // Close the "more" menu when clicking outside it or pressing Escape.
   useEffect(() => {
     if (!menuOpen) return;
     const onDown = (e: MouseEvent): void => {
@@ -74,9 +84,29 @@ function StudioInner(): React.ReactNode {
         setMenuOpen(false);
       }
     };
+    const onKey = (e: KeyboardEvent): void => {
+      if (e.key === "Escape") setMenuOpen(false);
+    };
     document.addEventListener("mousedown", onDown);
-    return () => document.removeEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
   }, [menuOpen]);
+
+  // Reveal the code drawer once, right after the first generation finishes,
+  // so users discover where their files went.
+  useEffect(() => {
+    const wasGenerating = prevGeneratingRef.current;
+    prevGeneratingRef.current = generation.isGenerating;
+    if (wasGenerating && !generation.isGenerating && !autoOpenedCodeRef.current) {
+      autoOpenedCodeRef.current = true;
+      if (Object.keys(useProjectStore.getState().files).length > 0) {
+        setShowCode(true);
+      }
+    }
+  }, [generation.isGenerating]);
 
   // Connect, activate session, and restore persisted files.
   useEffect(() => {
@@ -106,7 +136,10 @@ function StudioInner(): React.ReactNode {
     const client = getClient();
     const onRewindDone = (): void => {
       const snapshot = popRewindSnapshot();
-      if (snapshot !== null) restoreSnapshot(snapshot);
+      if (snapshot !== null) {
+        restoreSnapshot(snapshot);
+        showToast("Reverted to the previous version.");
+      }
     };
     client.on("rewind_done", onRewindDone);
     return () => {
@@ -156,6 +189,13 @@ function StudioInner(): React.ReactNode {
     <div className="h-screen flex flex-col bg-vs-bg overflow-hidden">
       {/* Reconnect toast (floats over everything) */}
       <ReconnectToast />
+
+      {/* Transient feedback toast (e.g. reverted) */}
+      {toast && (
+        <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-lg bg-vs-raised border border-vs-border shadow-lg text-sm text-vs-text">
+          {toast}
+        </div>
+      )}
 
       {/* Top bar */}
       <header className="flex items-center justify-between px-4 py-2.5 border-b border-vs-border bg-vs-surface shrink-0 gap-3">

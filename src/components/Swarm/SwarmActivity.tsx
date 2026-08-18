@@ -91,6 +91,7 @@ export function SwarmActivity(): ReactNode {
   };
 
   const stepCount = agentLog.length;
+  const agentCount = new Set(agentLog.filter((e) => e.agent).map((e) => e.agent)).size;
 
   return (
     <div className="border-t border-vs-border shrink-0">
@@ -124,6 +125,7 @@ export function SwarmActivity(): ReactNode {
           )}
           {stepCount > 0 && (
             <span className="text-[10px] font-medium text-vs-muted bg-vs-raised border border-vs-border-light rounded-full px-2 py-0.5 leading-none">
+              {agentCount > 0 ? `${agentCount} agent${agentCount === 1 ? "" : "s"} · ` : ""}
               {stepCount} steps
             </span>
           )}

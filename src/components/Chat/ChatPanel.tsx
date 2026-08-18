@@ -165,10 +165,18 @@ export function ChatPanel(): React.ReactNode {
               }
               // Prefer real prose; if the agent only emitted file blocks, show a
               // short summary instead of raw sentinel markup.
-              const summary =
-                deltas.length > 0
-                  ? `Generated ${deltas.length} file${deltas.length === 1 ? "" : "s"}.`
-                  : fullText;
+              const created = deltas.filter((d) => d.action !== "delete").map((d) => d.path);
+              const removed = deltas.filter((d) => d.action === "delete").map((d) => d.path);
+              const parts: string[] = [];
+              if (created.length > 0) {
+                parts.push(
+                  `Created ${created.length} file${created.length === 1 ? "" : "s"}: ${created.join(", ")}`,
+                );
+              }
+              if (removed.length > 0) {
+                parts.push(`Deleted: ${removed.join(", ")}`);
+              }
+              const summary = parts.length > 0 ? `${parts.join(" · ")}.` : fullText;
               const fallback =
                 "The swarm finished without producing any files or text. Please try again.";
               updateLastAssistantMessage((m) => ({

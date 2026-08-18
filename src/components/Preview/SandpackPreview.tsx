@@ -93,7 +93,7 @@ function OfflinePreview({
     return (
       <div className="h-full flex items-center justify-center gap-3 text-sm text-vs-muted">
         <span className="animate-spin w-4 h-4 border-2 border-brand-500 border-t-transparent rounded-full" />
-        Bundling preview…
+        Preparing preview…
       </div>
     );
   }
@@ -105,15 +105,15 @@ function OfflinePreview({
           <p className="font-semibold text-vs-text mb-1">Preview failed to build</p>
           <p className="text-vs-muted break-words">{state.message}</p>
           <p className="mt-3 text-xs text-vs-faint">
-            The preview bundles locally with esbuild and should not need the
-            internet. If this persists, check the generated code for errors.
+            The preview builds locally, so this is a code error — not a network
+            issue. Ask the swarm to fix it.
           </p>
         </div>
       </div>
     );
   }
 
-  return <iframe title="Preview" className="h-full w-full border-0 bg-white" srcDoc={state.srcdoc} />;
+  return <iframe title="Preview" className="h-full w-full border-0 bg-vs-surface" srcDoc={state.srcdoc} />;
 }
 
 // ---------------------------------------------------------------------------
@@ -309,19 +309,7 @@ export function SandpackPreview({
       {isGenerating && !hasFiles && (
         <div className="absolute inset-0 z-10 bg-vs-bg/60 flex items-center justify-center gap-3 text-sm text-vs-text">
           <span className="animate-spin w-4 h-4 border-2 border-brand-500 border-t-transparent rounded-full" />
-          Generating…
-        </div>
-      )}
-
-      {/* Regeneration — non-blocking pill so the running app stays usable */}
-      {isGenerating && hasFiles && !hidePreview && (
-        <div
-          className="absolute top-3 right-3 z-10 pointer-events-none flex items-center gap-2
-                      px-3 py-1.5 rounded-full bg-vs-surface/90 border border-vs-border
-                      shadow text-xs text-vs-muted"
-        >
-          <span className="animate-spin w-3 h-3 border border-brand-500 border-t-transparent rounded-full" />
-          Regenerating…
+          Building your app…
         </div>
       )}
 
