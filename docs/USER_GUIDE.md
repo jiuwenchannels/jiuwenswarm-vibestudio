@@ -3,14 +3,14 @@
 ## What is VibeStudio?
 
 VibeStudio lets you build React applications through conversation. You describe
-what you want, and a team of JiuwenSwarm AI agents writes the code and shows
+what you want, and a team of WorkSwarm AI agents writes the code and shows
 you a live preview — all in the browser, no coding required.
 
 ---
 
 ## Getting Started
 
-1. Make sure JiuwenSwarm is running. See [INSTALLATION.md](INSTALLATION.md).
+1. Make sure WorkSwarm is running. See [INSTALLATION.md](INSTALLATION.md).
 2. Open VibeStudio in your browser (default: `http://localhost:5174`).
 3. You land on the **Dashboard**.
 
@@ -37,12 +37,12 @@ Click any project card to open the Studio workspace.
 **Double-click** the project title in the card. An inline input appears.
 Edit the name and press **Enter** (or click away) to save. Press **Escape** to
 cancel. The rename is reflected immediately in both the local list and the
-JiuwenSwarm session.
+WorkSwarm session.
 
 ### Deleting a project
 
 Hover over a project card and click the **✕** button that appears in the
-top-right corner. This deletes the session from JiuwenSwarm and removes it
+top-right corner. This deletes the session from WorkSwarm and removes it
 from your list.
 
 ### Theme toggle
@@ -171,7 +171,7 @@ Click **`</> Code`** again to hide the drawer and return to the full-width previ
 ## Undo / Rewind
 
 After each successful generation a **↩ Undo** button appears in the toolbar.
-Clicking it sends a rewind request to JiuwenSwarm, which rolls the session
+Clicking it sends a rewind request to WorkSwarm, which rolls the session
 back to the state before that generation. VibeStudio restores the file map to
 match.
 
@@ -343,10 +343,10 @@ All toolbar buttons remain accessible at the top of the screen.
 
 ## Reconnection
 
-If the connection to JiuwenSwarm drops (e.g. the server is restarted), a
+If the connection to WorkSwarm drops (e.g. the server is restarted), a
 banner appears at the bottom of the screen:
 
-> 🔴 Disconnected from JiuwenSwarm — reconnecting…
+> 🔴 Disconnected from WorkSwarm — reconnecting…
 
 The client retries automatically with exponential back-off. The banner
 disappears as soon as the connection is restored and any in-flight generation
@@ -357,7 +357,7 @@ resumes.
 ## Troubleshooting
 
 **"Disconnected — reconnecting…" in the chat panel**
-: The JiuwenSwarm server is not reachable. Check that it is running on
+: The WorkSwarm server is not reachable. Check that it is running on
   `ws://localhost:19000` (or the URL you configured in `.env`). The SDK
   retries automatically with exponential back-off.
 

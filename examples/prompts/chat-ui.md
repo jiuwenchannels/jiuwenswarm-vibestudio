@@ -34,8 +34,8 @@ characters inline. No backend, no WebSocket — all interactions are simulated
 with `useState` and `setTimeout`.
 
 **Tips:**
-- To connect this UI to the JiuwenSwarm streaming API instead of mock data,
+- To connect this UI to the WorkSwarm streaming API instead of mock data,
   send a follow-up: *"Replace the mock typing simulation with a real
-  streaming call to the JiuwenSwarm SDK."*
+  streaming call to the WorkSwarm SDK."*
 - To add read receipts: *"Add double-tick read receipts under each outgoing
   message (✓✓ when delivered, blue when read)."*

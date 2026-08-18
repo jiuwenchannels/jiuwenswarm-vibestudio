@@ -3,7 +3,7 @@
  *
  * Allows the user to:
  * - Resume the most recent project.
- * - Create a new project from a prompt (creates a JiuwenSwarm session and
+ * - Create a new project from a prompt (creates a WorkSwarm session and
  *   immediately starts building).
  * - Open, rename, or delete an existing project.
  */
@@ -186,18 +186,20 @@ export function Dashboard(): React.ReactNode {
       {showTemplates && <TemplateModal onClose={() => setShowTemplates(false)} />}
 
       {/* Header */}
-      <header className="border-b border-vs-border px-8 py-5 flex items-center justify-between">
+      <header className="border-b border-vs-border px-8 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-500 to-violet-500 flex items-center justify-center text-white text-sm font-bold shadow-sm shadow-brand-500/30">
+          <span className="w-7 h-7 rounded-lg bg-gradient-to-br from-brand-500 to-violet-500 flex items-center justify-center text-white text-xs font-bold shadow-sm shadow-brand-500/30">
             V
           </span>
           <div>
-            <h1 className="text-xl font-bold text-vs-text tracking-tight">VibeStudio</h1>
+            <h1 className="text-lg font-bold text-vs-text tracking-tight">VibeStudio</h1>
             <p className="text-xs text-vs-muted mt-0.5">Build apps through conversation</p>
+            <p className="text-[10px] text-vs-faint mt-0.5">
+              Powered by <span className="text-vs-muted">WorkSwarm</span> · OpenJiuwen
+            </p>
           </div>
         </div>
 
-        {/* More menu — preferences + future actions */}
         <div className="relative" ref={menuRef}>
           <button
             onClick={() => setMenuOpen((v) => !v)}

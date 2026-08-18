@@ -1,7 +1,7 @@
 /**
  * Agent mode helpers.
  *
- * VibeStudio uses two JiuwenSwarm modes:
+ * VibeStudio uses two WorkSwarm modes:
  * - "team"  — full multi-agent generation (Architect + sub-agents).  Used for
  *             initial app creation and major feature additions.
  * - "agent" — single-agent mode.  Used for targeted edits, explanations, and
@@ -30,7 +30,7 @@ export function pickMode(intent: GenerationIntent): "team" | "agent" {
  * Build the `StreamEventsOptions` for a given intent and session.
  *
  * @param intent      What the user wants to do.
- * @param sessionId   Active JiuwenSwarm session ID.
+ * @param sessionId   Active WorkSwarm session ID.
  * @param extraPrefix Extra context to prepend (e.g. current file contents).
  */
 export function buildStreamOptions(

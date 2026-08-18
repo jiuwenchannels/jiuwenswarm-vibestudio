@@ -1,6 +1,6 @@
 /**
  * Stream parser — extracts file deltas and status messages from the raw token
- * stream produced by the JiuwenSwarm agent team.
+ * stream produced by the WorkSwarm agent team.
  *
  * Agent output convention
  * -----------------------

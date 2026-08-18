@@ -1,7 +1,7 @@
 /**
- * Session store — maps VibeStudio projects to JiuwenSwarm sessions.
+ * Session store — maps VibeStudio projects to WorkSwarm sessions.
  *
- * One project = one JiuwenSwarm session.  The session ID is the
+ * One project = one WorkSwarm session.  The session ID is the
  * authoritative project ID used in all SDK calls.
  */
 import { create } from "zustand";
@@ -17,7 +17,7 @@ export interface PersistedMessage {
 }
 
 export interface ProjectMeta {
-  /** JiuwenSwarm session ID. */
+  /** WorkSwarm session ID. */
   sessionId: string;
   /** Human-readable project title. */
   title: string;

@@ -197,47 +197,52 @@ function StudioInner(): React.ReactNode {
             Dashboard
           </Link>
           <span className="w-px h-4 bg-vs-border shrink-0" />
-          {renaming ? (
-            <input
-              autoFocus
-              value={renameValue}
-              onChange={(e) => setRenameValue(e.target.value)}
-              onBlur={commitRename}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") commitRename();
-                if (e.key === "Escape") setRenaming(false);
-              }}
-              className="min-w-0 text-sm font-semibold bg-vs-raised border border-brand-500 rounded px-2 py-0.5 text-vs-text focus:outline-none"
-            />
-          ) : (
-            <button
-              onClick={startRename}
-              className="text-sm font-semibold text-vs-text truncate tracking-tight hover:text-brand-400 transition-colors"
-              title="Rename project"
-            >
-              {project?.title ?? sessionId ?? "Loading…"}
-            </button>
-          )}
+          <div className="min-w-0">
+            {renaming ? (
+              <input
+                autoFocus
+                value={renameValue}
+                onChange={(e) => setRenameValue(e.target.value)}
+                onBlur={commitRename}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") commitRename();
+                  if (e.key === "Escape") setRenaming(false);
+                }}
+                className="block min-w-0 text-sm font-semibold bg-vs-raised border border-brand-500 rounded px-2 py-0.5 text-vs-text focus:outline-none"
+              />
+            ) : (
+              <button
+                onClick={startRename}
+                className="block text-sm font-semibold text-vs-text truncate tracking-tight hover:text-brand-400 transition-colors"
+                title="Rename project"
+              >
+                {project?.title ?? sessionId ?? "Loading…"}
+              </button>
+            )}
+            <p className="text-[10px] text-vs-faint leading-none mt-0.5">
+              Powered by <span className="text-vs-muted">WorkSwarm</span> · OpenJiuwen
+            </p>
+          </div>
         </div>
 
         <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
           {/* Code drawer toggle (explorer + editor) */}
-          <button
-            onClick={() => setShowCode((v) => !v)}
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium
-                        transition-all border
-                        ${showCode
-                          ? "bg-brand-500/15 border-brand-500/40 text-brand-300"
-                          : "bg-vs-raised border-vs-border text-vs-muted hover:text-vs-text hover:border-vs-border-light"}`}
-            title={showCode ? "Hide code" : "Show code (files + editor)"}
-          >
-            {"</>"} Code
-            {hasFiles && (
+          {hasFiles && (
+            <button
+              onClick={() => setShowCode((v) => !v)}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium
+                          transition-all border
+                          ${showCode
+                            ? "bg-brand-500/15 border-brand-500/40 text-brand-300"
+                            : "bg-vs-raised border-vs-border text-vs-muted hover:text-vs-text hover:border-vs-border-light"}`}
+              title={showCode ? "Hide code" : "Show code (files + editor)"}
+            >
+              {"</>"} Code
               <span className="ml-1 inline-flex items-center justify-center h-4 min-w-4 px-1 text-[10px] leading-none rounded-full bg-vs-border text-vs-muted">
                 {Object.keys(files).length}
               </span>
-            )}
-          </button>
+            </button>
+          )}
 
           {/* Rewind */}
           {rewindStack.length > 0 && !generation.isGenerating && (
@@ -271,7 +276,6 @@ function StudioInner(): React.ReactNode {
           )}
 
           {/* More menu — preferences + future actions */}
-          <span className="w-px h-5 bg-vs-border shrink-0 mx-0.5" />
           <div className="relative" ref={menuRef}>
             <button
               onClick={() => setMenuOpen((v) => !v)}

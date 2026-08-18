@@ -3,7 +3,7 @@
 ## Overview
 
 VibeStudio is a browser-based vibe-coding environment. The user describes
-what they want to build; JiuwenSwarm's multi-agent team generates the React +
+what they want to build; WorkSwarm's multi-agent team generates the React +
 TypeScript source files; an offline esbuild bundler renders a live preview in
 an iframe — all without a VibeStudio backend.
 
@@ -17,11 +17,11 @@ Browser
 │  │ Prompt   │→ │ @@FILE: proto  │→ │ (esbuild → iframe) │   │
 │  └──────────┘  └────────────────┘  └────────────────────┘   │
 │        │                                                     │
-│  @jiuwenswarm/sdk  (WebSocket)                               │
+│  @WorkSwarm/sdk  (WebSocket)                               │
 └─────────────────────────┬────────────────────────────────────┘
                           │ ws://localhost:19000/v1/ws
 ┌─────────────────────────▼────────────────────────────────────┐
-│  JiuwenSwarm Server                                          │
+│  WorkSwarm Server                                          │
 │  Agent team (planner → coder → reviewer → …)                 │
 └──────────────────────────────────────────────────────────────┘
 ```
@@ -31,7 +31,7 @@ Browser
 ## Directory Layout
 
 ```
-jiuwenswarm-vibestudio/
+WorkSwarm-vibestudio/
 ├── src/
 │   ├── App.tsx                    # Router (Dashboard / Studio routes)
 │   ├── main.tsx                   # React root, global CSS
@@ -88,7 +88,7 @@ Tracks every project the user has created.
 ```
 SessionState
 ├── projects: ProjectMeta[]
-│   ├── sessionId    — JiuwenSwarm session ID
+│   ├── sessionId    — WorkSwarm session ID
 │   ├── title        — project name
 │   ├── createdAt    — ISO timestamp
 │   ├── description  — first prompt (truncated)
@@ -119,7 +119,7 @@ ProjectState
 │   ├── activeAgent: string | null — current agent name (from status events)
 │   └── streamBuffer: string       — accumulated token text
 └── rewindStack: RewindEntry[]
-    ├── msgId: string              — JiuwenSwarm message ID
+    ├── msgId: string              — WorkSwarm message ID
     └── snapshot: Record<path, src>— files before this generation ran
 ```
 
@@ -144,8 +144,8 @@ the class synchronously before React renders to prevent a light flash.
 
 ## SDK Integration
 
-`src/lib/client.ts` exports a module-level singleton `JiuwenSwarmClient`
-configured from `src/config.ts` (reads `VITE_JIUWENSWARM_URL`).
+`src/lib/client.ts` exports a module-level singleton `WorkSwarmClient`
+configured from `src/config.ts` (reads `VITE_WORKSWARM_URL`).
 
 ```typescript
 // One connect() call is enough; subsequent calls are no-ops.
@@ -380,7 +380,7 @@ Kanban Board, Chat UI). Each template carries:
 - `prompt` — a detailed generation prompt.
 
 On selection:
-1. Creates a new JiuwenSwarm session with `client.sessions.create(title)`.
+1. Creates a new WorkSwarm session with `client.sessions.create(title)`.
 2. Calls `setInitialPrompt(prompt)` on the project store.
 3. Navigates to `/studio/<sessionId>`.
 4. `ChatPanel` auto-sends the prompt as the first message once connected.
@@ -419,7 +419,7 @@ workspace session.
 
 ## HITL — In-Chat Clarification
 
-When a JiuwenSwarm agent cannot proceed without more information it emits a
+When a WorkSwarm agent cannot proceed without more information it emits a
 `chat.ask_user_question` event.  `RpcClient` surfaces this as an `"ask_user"`
 EventEmitter event; `ChatPanel` catches it and calls `addChatMessage` with a
 message whose `question` field is set:

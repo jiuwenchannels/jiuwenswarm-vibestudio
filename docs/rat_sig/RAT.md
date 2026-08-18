@@ -1,6 +1,6 @@
 # Requirements Analysis — VibeStudio
 
-> Full document: `/Users/mishka/PycharmProjects/openjiuwen/jiuwenswarm/docs-michael/vibestudio/vibestudio-RAT.md`
+> Full document: `/Users/mishka/PycharmProjects/openjiuwen/WorkSwarm/docs-michael/vibestudio/vibestudio-RAT.md`
 >
 > This file is a local reference copy.  The authoritative version lives in the
 > docs-michael tree.  Keep both in sync when requirements change.

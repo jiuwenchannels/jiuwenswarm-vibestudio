@@ -3,7 +3,7 @@
  *
  * Displays 6 starter templates. Selecting one:
  * 1. Sets initialPrompt in the project store (ChatPanel auto-sends it on mount).
- * 2. Creates a new JiuwenSwarm session with the template title.
+ * 2. Creates a new WorkSwarm session with the template title.
  * 3. Navigates to the Studio workspace.
  *
  * Stage 2.1

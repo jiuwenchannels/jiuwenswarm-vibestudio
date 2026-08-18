@@ -38,7 +38,7 @@ export function ReconnectToast(): ReactNode {
     >
       <span className="w-2 h-2 rounded-full bg-red-400 animate-pulse shrink-0" />
       <span>
-        Disconnected from JiuwenSwarm —{" "}
+        Disconnected from WorkSwarm —{" "}
         <span className="text-vs-muted">reconnecting…</span>
       </span>
     </div>

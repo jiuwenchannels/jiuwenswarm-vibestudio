@@ -58,7 +58,7 @@ Stage 3.5 — Project forking
   into a new session owned by the current user.
 
 Stage 3.6 — Skill marketplace integration
-: Users can enable JiuwenSwarm skills (Stripe, Supabase, Resend, etc.) from
+: Users can enable WorkSwarm skills (Stripe, Supabase, Resend, etc.) from
   within VibeStudio; the agent team uses the selected skills during
   generation; skill list pulled from Swarm Skills Hub.
 
@@ -68,7 +68,7 @@ Stage 3.7 — Embeddable preview iframe
 
 Stage 3.8 — Agent feedback loop (thumbs-up / thumbs-down)
 : After each generation, allow thumbs-up / thumbs-down and a short note;
-  feeds back into skill self-evolution via the JiuwenSwarm HITL loop.
+  feeds back into skill self-evolution via the WorkSwarm HITL loop.
   Note: HITL clarification mid-generation is already implemented (see above).
 
 Stage 3.9 — Project analytics dashboard

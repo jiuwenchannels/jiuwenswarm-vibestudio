@@ -103,7 +103,7 @@ Follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format.
   mount via `loadFiles()`.
 - **Full rewind cycle** (Stage 1.14) — `RewindEntry {msgId, snapshot}` stack;
   `snapshotForRewind()` captures files before generation; `pushRewindable(msgId)`
-  pairs the JiuwenSwarm message ID with the snapshot; `rewind_done` event
+  pairs the WorkSwarm message ID with the snapshot; `rewind_done` event
   restores the pre-generation file state.
 - **Inline project rename** (Stage 1.15) — Double-click any project card title
   on Dashboard to edit inline; Enter saves, Escape cancels; best-effort server
@@ -135,7 +135,7 @@ Follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format.
 ## [0.1.0] — Phase 1 initial implementation
 
 ### Added
-- **Chat panel** — streaming WebSocket chat using `@jiuwenswarm/sdk`;
+- **Chat panel** — streaming WebSocket chat using `@WorkSwarm/sdk`;
   user / assistant / status message bubbles.
 - **Live preview** — Sandpack rendering generated React + TypeScript files
   in an isolated iframe.

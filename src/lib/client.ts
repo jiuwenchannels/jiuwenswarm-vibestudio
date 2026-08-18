@@ -1,13 +1,13 @@
 /**
- * JiuwenSwarm RPC client — speaks the gateway JSON-RPC wire protocol.
+ * WorkSwarm RPC client — speaks the gateway JSON-RPC wire protocol.
  *
  * Requests are `{id, type:"req", channel_id, method, params, timestamp}`; the
  * server replies with `{id, type:"res", ok, payload}` frames (or E2A frames
  * `{response_kind, request_id, body}`) and pushes `{type:"event", event,
  * payload}` frames for streaming and lifecycle events.
  *
- * The previous client used the flat-envelope protocol from `@jiuwenswarm/sdk`,
- * which the running JiuwenSwarm runtime server does not understand — this
+ * The previous client used the flat-envelope protocol from `@WorkSwarm/sdk`,
+ * which the running WorkSwarm runtime server does not understand — this
  * implementation matches the browser-extension / IDE plugin protocol.
  */
 import { config } from "../config";

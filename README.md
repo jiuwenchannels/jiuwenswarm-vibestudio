@@ -1,14 +1,14 @@
-# jiuwenswarm-vibestudio
+# WorkSwarm-vibestudio
 
-**VibeStudio** — build full-stack web apps through natural language conversation, powered by JiuwenSwarm.
+**VibeStudio** — build full-stack web apps through natural language conversation, powered by WorkSwarm.
 
-Describe what you want.  A coordinated team of JiuwenSwarm agents writes the code.  A live in-browser preview appears immediately.  No terminal, no configuration, no prior coding knowledge required.
+Describe what you want.  A coordinated team of WorkSwarm agents writes the code.  A live in-browser preview appears immediately.  No terminal, no configuration, no prior coding knowledge required.
 
 ---
 
 ## What it is
 
-VibeStudio is an OpenJiuwen Channel — a thin client over the JiuwenSwarm agent runtime.  It uses `@jiuwenswarm/sdk` as its sole communication layer with the JiuwenSwarm gateway.
+VibeStudio is an OpenJiuwen Channel — a thin client over the WorkSwarm agent runtime.  It uses `@WorkSwarm/sdk` as its sole communication layer with the WorkSwarm gateway.
 
 The agent side runs on the server:
 - **Architect** agent decomposes the request into components
@@ -33,15 +33,15 @@ The browser side renders:
 ## Quick start
 
 ```bash
-# 0. Start JiuwenSwarm (must be running first)
-jiuwenswarm-start           # or use the desktop installer
+# 0. Start WorkSwarm (must be running first)
+WorkSwarm-start           # or use the desktop installer
 
 # 1. Install dependencies
 npm install
 
 # 2. Copy and fill in environment variables
 cp .env.example .env
-# set VITE_JIUWENSWARM_URL=ws://localhost:19000/ws  (already the default)
+# set VITE_WORKSWARM_URL=ws://localhost:19000/ws  (already the default)
 
 # 3. Start the dev server
 npm run dev
@@ -57,13 +57,13 @@ troubleshooting see **[`docs/INSTALLATION.md`](docs/INSTALLATION.md)**.
 
 ```
 Browser (VibeStudio SPA)
-├── @jiuwenswarm/sdk         ← sole transport layer to JiuwenSwarm
+├── @WorkSwarm/sdk         ← sole transport layer to WorkSwarm
 │   └── RpcClient            ← WebSocket, sessions, streamEvents, rewind
 ├── Zustand stores           ← project files, chat messages, agent log, session list
 ├── Sandpack                 ← in-browser React/TS preview + optional code editor
 └── React Router             ← /  (Dashboard)  and  /studio/:sessionId
 
-JiuwenSwarm server
+WorkSwarm server
 └── agent team (Architect + Frontend + Backend + Database + QA)
     └── openjiuwen.core runtime (memory, retrieval, tool execution)
 ```
@@ -76,7 +76,7 @@ closing and re-opening a project restores the last state without re-generating.
 ## Project structure
 
 ```
-jiuwenswarm-vibestudio/
+WorkSwarm-vibestudio/
 ├── src/
 │   ├── config.ts                       # Env var access
 │   ├── main.tsx                        # React root
@@ -143,7 +143,7 @@ jiuwenswarm-vibestudio/
 
 ## How agent output works
 
-JiuwenSwarm agents embed generated files inside the token stream using sentinel markers:
+WorkSwarm agents embed generated files inside the token stream using sentinel markers:
 
 ```
 @@FILE: src/components/Button.tsx
@@ -209,4 +209,4 @@ VibeStudio server, plugin marketplace, project forking.
 
 - Requirements: [`docs/rat_sig/RAT.md`](docs/rat_sig/RAT.md) → full doc in `docs-michael/vibestudio/vibestudio-RAT.md`
 - Architecture: [`docs/rat_sig/SIG.md`](docs/rat_sig/SIG.md) → full doc in `docs-michael/vibestudio/vibestudio-SIG.md`
-- SDK: [`../jiuwenswarm-sdk/packages/sdk/README.md`](../jiuwenswarm-sdk/packages/sdk/README.md)
+- SDK: [`../WorkSwarm-sdk/packages/sdk/README.md`](../WorkSwarm-sdk/packages/sdk/README.md)
