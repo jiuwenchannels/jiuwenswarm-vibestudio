@@ -4,19 +4,7 @@
     <option name="autoReloadType" value="ALL" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="3fc1f405-96b4-4e40-b7ea-9e1cf65dbe69" name="Changes" comment="Initial">
-      <change beforePath="$PROJECT_DIR$/.env.example" beforeDir="false" afterPath="$PROJECT_DIR$/.env.example" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.github/workflows/ci.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.github/workflows/ci.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CHANGELOG.md" beforeDir="false" afterPath="$PROJECT_DIR$/CHANGELOG.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/ARCHITECTURE.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/ARCHITECTURE.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/INSTALLATION.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/INSTALLATION.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/rat_sig/RAT.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/rat_sig/RAT.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/rat_sig/SIG.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/rat_sig/SIG.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/config.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/config.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/lib/client.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/client.ts" afterDir="false" />
-    </list>
+    <list default="true" id="3fc1f405-96b4-4e40-b7ea-9e1cf65dbe69" name="Changes" comment="Initial" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -143,7 +131,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1786963006711</updated>
-      <workItem from="1786963008374" duration="23978000" />
+      <workItem from="1786963008374" duration="24443000" />
     </task>
     <task id="LOCAL-00001" summary="Initial">
       <option name="closed" value="true" />
@@ -345,7 +333,15 @@
       <option name="project" value="LOCAL" />
       <updated>1787040549337</updated>
     </task>
-    <option name="localTasksCounter" value="26" />
+    <task id="LOCAL-00026" summary="Initial">
+      <option name="closed" value="true" />
+      <created>1787041151060</created>
+      <option name="number" value="00026" />
+      <option name="presentableId" value="LOCAL-00026" />
+      <option name="project" value="LOCAL" />
+      <updated>1787041151060</updated>
+    </task>
+    <option name="localTasksCounter" value="27" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

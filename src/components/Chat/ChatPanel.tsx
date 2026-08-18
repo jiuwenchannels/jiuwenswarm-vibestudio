@@ -271,13 +271,12 @@ export function ChatPanel(): React.ReactNode {
     [runGeneration],
   );
 
-  // Auto-send template prompt once connected.
+  // Auto-send template prompt once connected (without leaving it in the composer).
   useEffect(() => {
     if (!initialPrompt || autoSentRef.current || !activeSessionId || !connected) return;
     autoSentRef.current = true;
     const prompt = initialPrompt;
     setInitialPrompt(null);
-    setInput(prompt);
     setTimeout(() => {
       void handleSubmit({ preventDefault: () => {} } as FormEvent, prompt);
     }, 300);
