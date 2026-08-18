@@ -10,7 +10,7 @@
  * resizable drawer at the bottom — a vertical split — so it never squeezes the
  * preview sideways. Clicking a file in the tree or a tab in the editor opens it.
  */
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useProjectStore } from "../../store/project";
 import { Resizer } from "../Resizer";
 import { MonacoEditorPanel } from "../Editor/MonacoEditorPanel";
@@ -43,6 +43,51 @@ function wrapBundle(bundle: string): string {
   );
 }
 
+/** Resolve a relative href against a project path (e.g. "/index.html"). */
+function resolvePath(base: string, href: string): string {
+  if (href.startsWith("/")) return href;
+  const dir = base.slice(0, base.lastIndexOf("/") + 1);
+  const joined = dir + href;
+  const parts = joined.split("/");
+  const stack: string[] = [];
+  for (const p of parts) {
+    if (p === "" || p === ".") continue;
+    if (p === "..") stack.pop();
+    else stack.push(p);
+  }
+  return "/" + stack.join("/");
+}
+
+/** Injected into static HTML so internal link clicks stay inside the preview. */
+const NAV_SCRIPT = `<script>
+(function () {
+  function onClick(e) {
+    var el = e.target;
+    while (el && el !== document && el.nodeName !== "A") el = el.parentElement;
+    if (!el || el.nodeName !== "A") return;
+    var href = el.getAttribute("href");
+    if (!href) return;
+    if (/^(https?:|mailto:|tel:|javascript:|\/\/|data:)/i.test(href)) return;
+
+    // Same-page anchor — scroll, don't let the iframe navigate to the parent URL.
+    if (href.charAt(0) === "#") {
+      e.preventDefault();
+      var id = decodeURIComponent(href.slice(1));
+      var target = id ? document.getElementById(id) : null;
+      if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+      else window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+
+    // Internal page link — hand the path to the parent.
+    e.preventDefault();
+    parent.postMessage({ vstudio: true, type: "navigate", path: href }, "*");
+  }
+  // Capture phase so it runs before the page's own click handlers.
+  document.addEventListener("click", onClick, true);
+})();
+</script>`;
+
 /**
  * Offline live preview. React projects are POSTed to the dev server and
  * bundled with esbuild (resolving React from local node_modules); static
@@ -59,9 +104,11 @@ function OfflinePreview({
   staticHtml?: string;
 }): ReactNode {
   const [state, setState] = useState<PreviewState>({ kind: "loading" });
+  const currentPathRef = useRef(entry);
 
   useEffect(() => {
     if (staticHtml != null) {
+      currentPathRef.current = entry;
       setState({ kind: "ready", srcdoc: staticHtml });
       return;
     }
@@ -88,6 +135,24 @@ function OfflinePreview({
       cancelled = true;
     };
   }, [files, entry, staticHtml]);
+
+  // Static sites: handle internal link navigation (relative hrefs stay in the
+  // preview instead of escaping to the dev server).
+  useEffect(() => {
+    if (staticHtml == null) return;
+    const onMessage = (ev: MessageEvent): void => {
+      const d = ev.data as { vstudio?: boolean; type?: string; path?: string } | null;
+      if (!d || !d.vstudio || d.type !== "navigate" || !d.path) return;
+      const resolved = resolvePath(currentPathRef.current, d.path);
+      const content = files[resolved] ?? files[resolved.replace(/^\//, "")];
+      if (content !== undefined) {
+        currentPathRef.current = resolved;
+        setState({ kind: "ready", srcdoc: inlineHtml(resolved, content, files) });
+      }
+    };
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+  }, [staticHtml, files]);
 
   if (state.kind === "loading") {
     return (
@@ -248,6 +313,16 @@ function inlineHtml(
       return js !== null ? `<script>${js}</script>` : tag;
     },
   );
+
+  // Keep internal link clicks inside the preview. Inject before </body> (or
+  // </html>) so it reliably executes within the parsed document.
+  if (/<\/body>/i.test(out)) {
+    out = out.replace(/<\/body>/i, NAV_SCRIPT + "</body>");
+  } else if (/<\/html>/i.test(out)) {
+    out = out.replace(/<\/html>/i, NAV_SCRIPT + "</html>");
+  } else {
+    out += NAV_SCRIPT;
+  }
 
   return out;
 }
