@@ -17,7 +17,7 @@ Browser
 │  │ Prompt   │→ │ @@FILE: proto  │→ │ (esbuild → iframe) │   │
 │  └──────────┘  └────────────────┘  └────────────────────┘   │
 │        │                                                     │
-│  @WorkSwarm/sdk  (WebSocket)                               │
+│  @jiuwenswarm/sdk  (WebSocket)                               │
 └─────────────────────────┬────────────────────────────────────┘
                           │ ws://localhost:19000/v1/ws
 ┌─────────────────────────▼────────────────────────────────────┐
@@ -31,7 +31,7 @@ Browser
 ## Directory Layout
 
 ```
-WorkSwarm-vibestudio/
+jiuwenswarm-vibestudio/
 ├── src/
 │   ├── App.tsx                    # Router (Dashboard / Studio routes)
 │   ├── main.tsx                   # React root, global CSS
@@ -145,7 +145,7 @@ the class synchronously before React renders to prevent a light flash.
 ## SDK Integration
 
 `src/lib/client.ts` exports a module-level singleton `WorkSwarmClient`
-configured from `src/config.ts` (reads `VITE_WORKSWARM_URL`).
+configured from `src/config.ts` (reads `VITE_JIUWENSWARM_URL`).
 
 ```typescript
 // One connect() call is enough; subsequent calls are no-ops.

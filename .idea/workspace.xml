@@ -6,28 +6,16 @@
   <component name="ChangeListManager">
     <list default="true" id="3fc1f405-96b4-4e40-b7ea-9e1cf65dbe69" name="Changes" comment="Initial">
       <change beforePath="$PROJECT_DIR$/.env.example" beforeDir="false" afterPath="$PROJECT_DIR$/.env.example" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.github/workflows/ci.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.github/workflows/ci.yml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/CHANGELOG.md" beforeDir="false" afterPath="$PROJECT_DIR$/CHANGELOG.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/docs/ARCHITECTURE.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/ARCHITECTURE.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/docs/INSTALLATION.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/INSTALLATION.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/ROADMAP.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/ROADMAP.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/USER_GUIDE.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/USER_GUIDE.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/docs/rat_sig/RAT.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/rat_sig/RAT.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/docs/rat_sig/SIG.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/rat_sig/SIG.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/prompts/chat-ui.md" beforeDir="false" afterPath="$PROJECT_DIR$/examples/prompts/chat-ui.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/index.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/components/ReconnectToast.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/ReconnectToast.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/components/TemplateModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/TemplateModal.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/config.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/config.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/lib/agentMode.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/agentMode.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/lib/client.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/client.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/lib/streamParser.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/streamParser.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/pages/Dashboard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/pages/Dashboard.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/pages/Studio.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/pages/Studio.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/store/project.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/store/project.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/store/session.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/store/session.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -155,7 +143,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1786963006711</updated>
-      <workItem from="1786963008374" duration="23587000" />
+      <workItem from="1786963008374" duration="23978000" />
     </task>
     <task id="LOCAL-00001" summary="Initial">
       <option name="closed" value="true" />
@@ -349,7 +337,15 @@
       <option name="project" value="LOCAL" />
       <updated>1787039275484</updated>
     </task>
-    <option name="localTasksCounter" value="25" />
+    <task id="LOCAL-00025" summary="Initial">
+      <option name="closed" value="true" />
+      <created>1787040549337</created>
+      <option name="number" value="00025" />
+      <option name="presentableId" value="LOCAL-00025" />
+      <option name="project" value="LOCAL" />
+      <updated>1787040549337</updated>
+    </task>
+    <option name="localTasksCounter" value="26" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

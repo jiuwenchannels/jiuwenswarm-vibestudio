@@ -20,23 +20,23 @@ gateway.  Start it before opening VibeStudio.
 
 **Option A — desktop installer (Windows / macOS / HarmonyOS)**
 
-Download and run the installer from [openjiuwen.com](https://openjiuwen.com/en/WorkSwarm).
+Download and run the installer from [openjiuwen.com](https://openjiuwen.com/en/jiuwenswarm).
 The gateway starts automatically on port 19000.
 
 **Option B — pip**
 
 ```bash
-pip install WorkSwarm
-WorkSwarm-init          # first-time setup only
-WorkSwarm-start
+pip install jiuwenswarm
+jiuwenswarm-init          # first-time setup only
+jiuwenswarm-start
 ```
 
 **Option C — from source**
 
 ```bash
-cd WorkSwarm            # the openjiuwen/WorkSwarm repository
+cd jiuwenswarm            # the openjiuwen/jiuwenswarm repository
 uv venv && uv pip install -e .
-WorkSwarm-start
+jiuwenswarm-start
 ```
 
 After any of the above, the WebSocket gateway is available at:
@@ -59,14 +59,14 @@ curl http://localhost:19000/v1/health
 If you have the `openjiuwenchannels` repository already:
 
 ```bash
-cd /path/to/openjiuwenchannels/WorkSwarm-vibestudio
+cd /path/to/openjiuwenchannels/jiuwenswarm-vibestudio
 ```
 
 If not, clone it:
 
 ```bash
 git clone <repo-url> openjiuwenchannels
-cd openjiuwenchannels/WorkSwarm-vibestudio
+cd openjiuwenchannels/jiuwenswarm-vibestudio
 ```
 
 ---
@@ -77,20 +77,20 @@ cd openjiuwenchannels/WorkSwarm-vibestudio
 npm install
 ```
 
-This also installs `@WorkSwarm/sdk` from the local sibling package at
-`../WorkSwarm-sdk/packages/sdk`.  If that path does not exist, install the
+This also installs `@jiuwenswarm/sdk` from the local sibling package at
+`../jiuwenswarm-sdk/packages/sdk`.  If that path does not exist, install the
 SDK from npm instead:
 
 ```bash
 # Alternative: install published SDK from npm
-npm install @WorkSwarm/sdk
+npm install @jiuwenswarm/sdk
 ```
 
 Then remove the `file:` reference from `package.json` and replace it with the
 published version:
 
 ```json
-"@WorkSwarm/sdk": "^1.0.0"
+"@jiuwenswarm/sdk": "^1.0.0"
 ```
 
 ---
@@ -105,7 +105,7 @@ Open `.env` and set at minimum:
 
 ```dotenv
 # WebSocket URL of the WorkSwarm gateway
-VITE_WORKSWARM_URL=ws://localhost:19000/v1/ws
+VITE_JIUWENSWARM_URL=ws://localhost:19000/v1/ws
 
 # Optional bearer token — leave empty if your server runs without auth
 VITE_AUTH_TOKEN=
@@ -115,7 +115,7 @@ VITE_AUTH_TOKEN=
 terminator, change the URL accordingly:
 
 ```dotenv
-VITE_WORKSWARM_URL=wss://your-server.example.com:19000/v1/ws
+VITE_JIUWENSWARM_URL=wss://your-server.example.com:19000/v1/ws
 VITE_AUTH_TOKEN=your-token-here
 ```
 
@@ -152,7 +152,7 @@ dashboard.
 3. The top bar of the chat panel shows a green dot and **"Connected to WorkSwarm"**.
 4. If the dot is red (**"Disconnected — reconnecting…"**):
    - Confirm the WorkSwarm server is running: `curl http://localhost:19000/v1/health`
-   - Confirm `VITE_WORKSWARM_URL` in `.env` matches the actual server address.
+   - Confirm `VITE_JIUWENSWARM_URL` in `.env` matches the actual server address.
    - Restart the Vite dev server (`Ctrl+C` then `npm run dev`) after editing `.env`.
 
 ---
@@ -199,13 +199,13 @@ npx serve dist
 ```
 
 The only runtime dependency is a reachable WorkSwarm gateway.  The
-`VITE_WORKSWARM_URL` must be set to the production gateway URL **before**
+`VITE_JIUWENSWARM_URL` must be set to the production gateway URL **before**
 running `npm run build` because Vite inlines env vars at build time.
 
 For production, build with explicit env vars:
 
 ```bash
-VITE_WORKSWARM_URL=wss://gateway.prod.example.com:19000/v1/ws \
+VITE_JIUWENSWARM_URL=wss://gateway.prod.example.com:19000/v1/ws \
 VITE_AUTH_TOKEN=prod-token \
 npm run build
 ```
@@ -228,10 +228,10 @@ npm run dev       # restart dev server
 **"Could not create project: Not connected. Call connect() first."**
 : The SDK could not open the WebSocket before the session was created.
   The connection is attempted automatically on first project creation.
-  Check that `VITE_WORKSWARM_URL` is correct and the gateway is running.
+  Check that `VITE_JIUWENSWARM_URL` is correct and the gateway is running.
 
 **WebSocket connection immediately drops**
-: If `VITE_WORKSWARM_URL` starts with `ws://` but the page is served over
+: If `VITE_JIUWENSWARM_URL` starts with `ws://` but the page is served over
   `https://`, the browser blocks the mixed-content request.  Use `wss://`
   and a TLS-terminated gateway for production HTTPS deployments.
 
@@ -240,10 +240,10 @@ npm run dev       # restart dev server
   Ensure your network allows this domain.  In restricted environments, the
   Sandpack bundler URL can be customized via the `bundlerURL` prop (Phase 2).
 
-**`npm install` fails on `@WorkSwarm/sdk`**
-: The local `file:` reference requires `WorkSwarm-sdk/packages/sdk` to exist
+**`npm install` fails on `@jiuwenswarm/sdk`**
+: The local `file:` reference requires `jiuwenswarm-sdk/packages/sdk` to exist
   as a sibling directory.  Run `npm install` from inside
-  `WorkSwarm-sdk/packages/sdk` first, or switch to the published npm package
+  `jiuwenswarm-sdk/packages/sdk` first, or switch to the published npm package
   as described in Step 3.
 
 **Port 5174 already in use**

@@ -6,7 +6,7 @@
  * `{response_kind, request_id, body}`) and pushes `{type:"event", event,
  * payload}` frames for streaming and lifecycle events.
  *
- * The previous client used the flat-envelope protocol from `@WorkSwarm/sdk`,
+ * The previous client used the flat-envelope protocol from `@jiuwenswarm/sdk`,
  * which the running WorkSwarm runtime server does not understand — this
  * implementation matches the browser-extension / IDE plugin protocol.
  */

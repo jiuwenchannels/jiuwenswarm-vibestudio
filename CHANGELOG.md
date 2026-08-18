@@ -135,7 +135,7 @@ Follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format.
 ## [0.1.0] — Phase 1 initial implementation
 
 ### Added
-- **Chat panel** — streaming WebSocket chat using `@WorkSwarm/sdk`;
+- **Chat panel** — streaming WebSocket chat using `@jiuwenswarm/sdk`;
   user / assistant / status message bubbles.
 - **Live preview** — Sandpack rendering generated React + TypeScript files
   in an isolated iframe.
