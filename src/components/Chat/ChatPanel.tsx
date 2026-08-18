@@ -38,7 +38,7 @@ export function ChatPanel(): React.ReactNode {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const autoSentRef = useRef(false);
 
-  const { activeSessionId, persistFiles } = useSessionStore();
+  const { activeSessionId, persistFiles, persistMessages } = useSessionStore();
   const {
     messages,
     generation,
@@ -46,6 +46,7 @@ export function ChatPanel(): React.ReactNode {
     applyDeltas, setGenerating, appendToken, clearStreamBuffer,
     pushRewindable, snapshotForRewind,
     appendAgentLog,
+    setChangedFiles,
     initialPrompt, setInitialPrompt,
   } = useProjectStore();
 
@@ -165,6 +166,7 @@ export function ChatPanel(): React.ReactNode {
               });
               if (deltas.length > 0) {
                 applyDeltas(deltas);
+                setChangedFiles(deltas.map((d) => d.path));
                 if (activeSessionId) {
                   persistFiles(activeSessionId, useProjectStore.getState().files);
                 }
@@ -183,6 +185,12 @@ export function ChatPanel(): React.ReactNode {
                 isStreaming: false,
               }));
               clearStreamBuffer();
+              if (activeSessionId) {
+                const finalMsgs = useProjectStore.getState().messages
+                  .filter((m) => !m.isStreaming)
+                  .map(({ id, role, content, isError }) => ({ id, role, content, isError }));
+                persistMessages(activeSessionId, finalMsgs);
+              }
               setGenerating(false);
               break;
             }
@@ -212,7 +220,8 @@ export function ChatPanel(): React.ReactNode {
       activeSessionId,
       addChatMessage, updateLastAssistantMessage,
       applyDeltas, setGenerating, appendToken, clearStreamBuffer,
-      snapshotForRewind, persistFiles, appendAgentLog,
+      snapshotForRewind, persistFiles, persistMessages, appendAgentLog,
+      setChangedFiles,
     ],
   );
 
@@ -302,9 +311,16 @@ export function ChatPanel(): React.ReactNode {
             </div>
           </div>
         )}
-        {messages.map((msg) => (
-          <MessageBubble key={msg.id} message={msg} onAnswer={handleAnswer} />
-        ))}
+        {messages.map((msg, i) => {
+          let onRetry: (() => void) | undefined;
+          if (msg.isError && msg.role === "assistant") {
+            const lastUser = [...messages.slice(0, i)].reverse().find((m) => m.role === "user");
+            if (lastUser) onRetry = () => void runGeneration(lastUser.content);
+          }
+          return (
+            <MessageBubble key={msg.id} message={msg} onAnswer={handleAnswer} onRetry={onRetry} />
+          );
+        })}
         <div ref={bottomRef} />
       </div>
 

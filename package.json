@@ -1,6 +1,6 @@
 {
   "name": "jiuwenswarm-vibestudio",
-  "version": "0.1.0",
+  "version": "0.3.1",
   "private": true,
   "description": "VibeStudio — build apps through conversation, powered by JiuwenSwarm",
   "type": "module",

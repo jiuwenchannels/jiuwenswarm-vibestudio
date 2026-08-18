@@ -63,6 +63,8 @@ interface ProjectState {
   // Files
   files: Record<string, string>;
   activeFile: string | null;
+  /** Paths modified in the most recent generation — cleared at generation start. */
+  changedFiles: Set<string>;
 
   // Chat history (owned here so Studio can export it)
   messages: ChatMessage[];
@@ -84,11 +86,13 @@ interface ProjectState {
   applyDeltas: (deltas: FileDelta[]) => void;
   setActiveFile: (path: string | null) => void;
   loadFiles: (files: Record<string, string>) => void;
+  setChangedFiles: (paths: string[]) => void;
 
   // --- Chat actions ---
   addChatMessage: (msg: ChatMessage) => void;
   updateLastAssistantMessage: (updater: (m: ChatMessage) => ChatMessage) => void;
   clearChatMessages: () => void;
+  loadMessages: (messages: ChatMessage[]) => void;
 
   // --- Generation state ---
   setGenerating: (generating: boolean, agent?: string) => void;
@@ -129,6 +133,7 @@ const INITIAL_GENERATION: GenerationState = {
 export const useProjectStore = create<ProjectState>()((set, get) => ({
   files: {},
   activeFile: null,
+  changedFiles: new Set<string>(),
   messages: [],
   generation: INITIAL_GENERATION,
   agentLog: [],
@@ -160,6 +165,9 @@ export const useProjectStore = create<ProjectState>()((set, get) => ({
       activeFile: s.activeFile ?? Object.keys(files)[0] ?? null,
     })),
 
+  setChangedFiles: (paths) =>
+    set({ changedFiles: new Set(paths.map((p) => p.replace(/^\//, ""))) }),
+
   // --- Chat ---
 
   addChatMessage: (msg) =>
@@ -176,6 +184,8 @@ export const useProjectStore = create<ProjectState>()((set, get) => ({
     }),
 
   clearChatMessages: () => set({ messages: [] }),
+
+  loadMessages: (messages) => set({ messages }),
 
   // --- Generation state ---
 
@@ -209,7 +219,7 @@ export const useProjectStore = create<ProjectState>()((set, get) => ({
   // --- Rewind ---
 
   snapshotForRewind: () =>
-    set((s) => ({ _pendingSnapshot: { ...s.files } })),
+    set((s) => ({ _pendingSnapshot: { ...s.files }, changedFiles: new Set<string>() })),
 
   pushRewindable: (messageId) =>
     set((s) => {
@@ -241,6 +251,7 @@ export const useProjectStore = create<ProjectState>()((set, get) => ({
     set({
       files: {},
       activeFile: null,
+      changedFiles: new Set<string>(),
       messages: [],
       generation: INITIAL_GENERATION,
       agentLog: [],

@@ -42,6 +42,7 @@ interface NodeProps {
   depth: number;
   activeFile: string | null;
   expanded: Set<string>;
+  changedFiles: Set<string>;
   onSelect: (path: string) => void;
   onToggle: (path: string) => void;
 }
@@ -51,6 +52,7 @@ function TreeNodeView({
   depth,
   activeFile,
   expanded,
+  changedFiles,
   onSelect,
   onToggle,
 }: NodeProps): ReactNode {
@@ -60,6 +62,7 @@ function TreeNodeView({
   });
 
   const isActive = node.isFile && activeFile === node.path;
+  const isChanged = node.isFile && changedFiles.has(node.path);
   const isCollapsed = !node.isFile && node.name !== "" && !expanded.has(node.path);
 
   return (
@@ -104,7 +107,13 @@ function TreeNodeView({
               </svg>
             )}
           </span>
-          <span className="truncate">{node.name}</span>
+          <span className="truncate flex-1">{node.name}</span>
+          {isChanged && (
+            <span
+              className="shrink-0 w-1.5 h-1.5 rounded-full bg-brand-400 mr-1"
+              title="Modified in last generation"
+            />
+          )}
         </button>
       )}
       {!node.isFile &&
@@ -116,6 +125,7 @@ function TreeNodeView({
             depth={depth + (node.name ? 1 : 0)}
             activeFile={activeFile}
             expanded={expanded}
+            changedFiles={changedFiles}
             onSelect={onSelect}
             onToggle={onToggle}
           />
@@ -132,6 +142,7 @@ interface Props {
 export function FileTree({ onSelect }: Props): ReactNode {
   const files = useProjectStore((s) => s.files);
   const activeFile = useProjectStore((s) => s.activeFile);
+  const changedFiles = useProjectStore((s) => s.changedFiles);
   const setActiveFile = useProjectStore((s) => s.setActiveFile);
   // Folders are collapsed by default — an empty set means "nothing expanded".
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -185,6 +196,7 @@ export function FileTree({ onSelect }: Props): ReactNode {
           depth={0}
           activeFile={activeFile}
           expanded={expanded}
+          changedFiles={changedFiles}
           onSelect={handleSelect}
           onToggle={handleToggle}
         />

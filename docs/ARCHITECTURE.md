@@ -364,6 +364,37 @@ workspace session.
 
 ---
 
+## HITL — In-Chat Clarification
+
+When a JiuwenSwarm agent cannot proceed without more information it emits a
+`chat.ask_user_question` event.  `RpcClient` surfaces this as an `"ask_user"`
+EventEmitter event; `ChatPanel` catches it and calls `addChatMessage` with a
+message whose `question` field is set:
+
+```ts
+interface HitlQuestion {
+  requestId: string;   // UUID from the server — passed back in the answer
+  text: string;        // The question text shown to the user
+}
+```
+
+`MessageBubble` inspects the `question` field and renders a distinct
+**clarification card** instead of a normal bubble:
+
+- Blue-bordered card with a "The swarm needs clarification" header pill.
+- The agent's question text.
+- An inline `<input>` and **Reply** button (Enter key also submits).
+- After the user types an answer and presses Reply, `onAnswer(requestId, text)`
+  is called, which routes to `getClient().sendAnswer(requestId, { answer: text })`.
+- The button shows "Sending…" and disables while the RPC call is in flight.
+- A `sendingRef` guard prevents double-sends on rapid clicks.
+
+On the server side the blocked agent receives the answer and continues
+generation.  The rest of the stream (further deltas, file blocks) then arrives
+as normal.
+
+---
+
 ## Workspace Layout
 
 ### Desktop (≥ md)

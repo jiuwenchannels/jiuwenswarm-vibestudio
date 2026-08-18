@@ -52,7 +52,7 @@ function StudioInner(): React.ReactNode {
   const { setActive, activeProject, projects } = useSessionStore();
   const {
     generation, rewindStack, files, messages,
-    loadFiles, popRewindSnapshot, restoreSnapshot,
+    loadFiles, loadMessages, popRewindSnapshot, restoreSnapshot,
     clearChatMessages, clearAgentLog,
   } = useProjectStore();
   const { isDark, toggle: toggleTheme } = useThemeStore();
@@ -75,10 +75,13 @@ function StudioInner(): React.ReactNode {
       })
       .catch(console.error);
 
-    // Restore the last-known file map from the persisted session store.
+    // Restore the last-known file map and chat messages from the persisted session store.
     const meta = useSessionStore.getState().projects.find((p) => p.sessionId === sessionId);
     if (meta?.files && Object.keys(meta.files).length > 0) {
       loadFiles(meta.files);
+    }
+    if (meta?.messages && meta.messages.length > 0) {
+      loadMessages(meta.messages as import("../store/project").ChatMessage[]);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId]);

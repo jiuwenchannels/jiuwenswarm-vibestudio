@@ -3,16 +3,18 @@
 Each stage is intentionally small-to-medium. Stages within a phase may be
 worked in parallel where dependencies allow.
 
-**Current version: v0.3** — Phase 1 complete. Phase 2 core UX complete
-(2.1 templates, 2.2 quick-actions, 2.5 swarm panel, 2.10 mobile layout,
-2.11 chat export, 2.12 reconnect toast). Remaining Phase 2 stages below.
+**Current version: v0.3.1** — Phase 1 complete. Phase 2 core UX complete
+(2.1 templates, 2.2 quick-actions, 2.5 swarm activity, 2.10 mobile layout,
+2.11 chat export, 2.12 reconnect toast). Also shipped: resizable panels,
+HITL in-chat clarification cards, chat message persistence, changed-file
+badges in FileTree, retry button on error bubbles. See `CHANGELOG.md` for full details.
 
 ---
 
 ## Phase 2 — Richer editing and deployment (remaining)
 
 Stage 2.3 — Monaco editor panel (read-only)
-: Lazy-load `@monaco-editor/react`; replace Sandpack's built-in code view with
+: Lazy-load `@monaco-editor/react`; replace Sandpack's built-in CodeMirror with
   Monaco for richer syntax highlighting, code folding, and minimap. Tab
   switcher across generated files.
 
@@ -72,9 +74,10 @@ Stage 3.7 — Embeddable preview iframe
 : Generate `<iframe>` embed code for the current preview; suitable for
   portfolio pages and public demos.
 
-Stage 3.8 — Agent feedback loop
+Stage 3.8 — Agent feedback loop (thumbs-up / thumbs-down)
 : After each generation, allow thumbs-up / thumbs-down and a short note;
   feeds back into skill self-evolution via the JiuwenSwarm HITL loop.
+  Note: HITL clarification mid-generation is already implemented (see above).
 
 Stage 3.9 — Project analytics dashboard
 : Per-project token usage, generation count, and deployment history; pulled

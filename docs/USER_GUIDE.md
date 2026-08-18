@@ -254,6 +254,37 @@ On mobile, the activity appears inline in the **Chat** tab — no extra tab need
 
 ---
 
+## Agent Clarification (HITL)
+
+Sometimes the agent team cannot make a decision without more context — for
+example, you asked for "a settings page" but the app has no existing settings.
+When this happens you will see a **clarification card** appear in the chat
+instead of a normal message:
+
+```
+┌─────────────────────────────────────────────┐
+│ The swarm needs clarification               │
+│                                             │
+│ Should the settings page include user       │
+│ account options or only appearance          │
+│ preferences?                                │
+│                                             │
+│ [Type your answer…                    Reply]│
+└─────────────────────────────────────────────┘
+```
+
+Type your answer and press **Reply** (or **Enter**). The agents receive your
+answer and continue generating from where they paused. You do not need to
+re-send the original prompt.
+
+**Tips:**
+- Be specific. "Account + appearance, but no billing" is better than "both".
+- If you are unsure, answer briefly — the agent will make sensible assumptions
+  for anything not covered.
+- You can always refine with a follow-up prompt after generation finishes.
+
+---
+
 ## Exporting the Chat
 
 Once you have exchanged at least one non-status message, a **↓ Chat** button

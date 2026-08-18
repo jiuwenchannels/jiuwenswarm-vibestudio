@@ -14,9 +14,10 @@ export type { ChatMessage };
 interface Props {
   message: ChatMessage;
   onAnswer?: (requestId: string, answer: string) => void;
+  onRetry?: () => void;
 }
 
-export function MessageBubble({ message, onAnswer }: Props): ReactNode {
+export function MessageBubble({ message, onAnswer, onRetry }: Props): ReactNode {
   const { role, content, isStreaming } = message;
 
   if (role === "status") {
@@ -67,6 +68,15 @@ export function MessageBubble({ message, onAnswer }: Props): ReactNode {
         {content}
         {isStreaming && (
           <span className="inline-block w-0.5 h-4 bg-vs-muted ml-0.5 animate-pulse align-middle" />
+        )}
+        {isError && onRetry && (
+          <button
+            onClick={onRetry}
+            className="mt-2 block text-[11px] font-medium text-rose-400 hover:text-rose-300
+                       underline underline-offset-2 transition-colors"
+          >
+            ↺ Retry
+          </button>
         )}
       </div>
     </div>

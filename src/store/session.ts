@@ -8,6 +8,14 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { SessionInfo } from "../lib/client";
 
+/** Minimal message shape stored alongside the project (no ephemeral fields). */
+export interface PersistedMessage {
+  id: string;
+  role: string;
+  content: string;
+  isError?: boolean;
+}
+
 export interface ProjectMeta {
   /** JiuwenSwarm session ID. */
   sessionId: string;
@@ -19,6 +27,8 @@ export interface ProjectMeta {
   description?: string;
   /** Last-known generated file map — persisted so files survive page reload. */
   files?: Record<string, string>;
+  /** Last-known chat messages — persisted so the conversation survives reload. */
+  messages?: PersistedMessage[];
 }
 
 interface SessionState {
@@ -33,6 +43,8 @@ interface SessionState {
   renameProject: (sessionId: string, title: string) => void;
   /** Persist the latest generated file map for a project (survives reload). */
   persistFiles: (sessionId: string, files: Record<string, string>) => void;
+  /** Persist the chat conversation for a project (survives reload). */
+  persistMessages: (sessionId: string, messages: PersistedMessage[]) => void;
   setActive: (sessionId: string | null) => void;
   activeProject: () => ProjectMeta | null;
 }
@@ -74,6 +86,13 @@ export const useSessionStore = create<SessionState>()(
         set((s) => ({
           projects: s.projects.map((p) =>
             p.sessionId === sessionId ? { ...p, files } : p,
+          ),
+        })),
+
+      persistMessages: (sessionId, messages) =>
+        set((s) => ({
+          projects: s.projects.map((p) =>
+            p.sessionId === sessionId ? { ...p, messages } : p,
           ),
         })),
 
