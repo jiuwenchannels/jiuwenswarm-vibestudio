@@ -21,7 +21,7 @@
  * - Mobile tab layout (2.10)
  * - Wrapped in ErrorBoundary (1.16)
  */
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { ChatPanel } from "../components/Chat/ChatPanel";
 import { SandpackPreview } from "../components/Preview/SandpackPreview";
@@ -63,6 +63,20 @@ function StudioInner(): React.ReactNode {
   const [mobileTab, setMobileTab] = useState<MobileTab>("chat");
   const [renaming, setRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState("");
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Close the "more" menu when clicking outside it.
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onDown = (e: MouseEvent): void => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [menuOpen]);
 
   // Connect, activate session, and restore persisted files.
   useEffect(() => {
@@ -235,16 +249,37 @@ function StudioInner(): React.ReactNode {
             </button>
           )}
 
-          {/* Theme toggle — de-emphasized preference, separated from actions */}
+          {/* More menu — preferences + future actions */}
           <span className="w-px h-5 bg-vs-border shrink-0 mx-0.5" />
-          <button
-            onClick={toggleTheme}
-            className="px-2 py-1.5 rounded-lg text-sm text-vs-muted hover:text-vs-text
-                       hover:bg-vs-raised transition-colors"
-            title={isDark ? "Switch to light mode" : "Switch to dark mode"}
-          >
-            {isDark ? "☀" : "☾"}
-          </button>
+          <div className="relative" ref={menuRef}>
+            <button
+              onClick={() => setMenuOpen((v) => !v)}
+              className="px-2 py-1.5 rounded-lg text-vs-muted hover:text-vs-text
+                         hover:bg-vs-raised transition-colors"
+              title="Menu"
+              aria-label="Menu"
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <circle cx="12" cy="5" r="1.7" />
+                <circle cx="12" cy="12" r="1.7" />
+                <circle cx="12" cy="19" r="1.7" />
+              </svg>
+            </button>
+            {menuOpen && (
+              <div className="absolute right-0 top-full mt-1 w-44 rounded-lg border border-vs-border bg-vs-surface shadow-lg py-1 z-50">
+                <button
+                  onClick={() => {
+                    toggleTheme();
+                    setMenuOpen(false);
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-vs-text hover:bg-vs-raised transition-colors"
+                >
+                  <span className="text-sm leading-none">{isDark ? "☀" : "☾"}</span>
+                  {isDark ? "Light mode" : "Dark mode"}
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </header>
 
