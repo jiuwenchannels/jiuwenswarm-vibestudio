@@ -299,7 +299,7 @@ export function ChatPanel(): React.ReactNode {
       </div>
 
       {/* Message list */}
-      <div className="flex-1 overflow-y-auto py-4 space-y-1.5">
+      <div role="log" aria-live="polite" className="flex-1 overflow-y-auto py-4 space-y-1.5">
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-vs-muted gap-5 px-8 text-center">
             <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-brand-500 to-violet-500 flex items-center justify-center shadow-lg shadow-brand-500/25">

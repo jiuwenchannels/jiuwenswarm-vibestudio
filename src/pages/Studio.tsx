@@ -300,6 +300,8 @@ function StudioInner(): React.ReactNode {
                          hover:bg-vs-raised transition-colors"
               title="Menu"
               aria-label="Menu"
+              aria-haspopup="menu"
+              aria-expanded={menuOpen}
             >
               <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                 <circle cx="12" cy="5" r="1.7" />
@@ -308,8 +310,26 @@ function StudioInner(): React.ReactNode {
               </svg>
             </button>
             {menuOpen && (
-              <div className="absolute right-0 top-full mt-1 w-44 rounded-lg border border-vs-border bg-vs-surface shadow-lg py-1 z-50">
+              <div
+                role="menu"
+                onKeyDown={(e) => {
+                  if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+                  e.preventDefault();
+                  const items = Array.from(
+                    e.currentTarget.querySelectorAll<HTMLButtonElement>("[role='menuitem']"),
+                  );
+                  const idx = items.indexOf(document.activeElement as HTMLButtonElement);
+                  const next =
+                    e.key === "ArrowDown"
+                      ? (idx + 1) % items.length
+                      : (idx - 1 + items.length) % items.length;
+                  items[next]?.focus();
+                }}
+                className="absolute right-0 top-full mt-1 w-44 rounded-lg border border-vs-border bg-vs-surface shadow-lg py-1 z-50"
+              >
                 <button
+                  role="menuitem"
+                  autoFocus
                   onClick={() => {
                     toggleTheme();
                     setMenuOpen(false);

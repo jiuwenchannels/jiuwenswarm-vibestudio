@@ -97,6 +97,9 @@ export function SwarmActivity(): ReactNode {
   const stepCount = entries.length;
   const agentCount = new Set(entries.filter((e) => e.agent).map((e) => e.agent)).size;
 
+  // Nothing to show — render nothing (no empty header / divider).
+  if (stepCount === 0) return null;
+
   return (
     <div className="border-t border-vs-border shrink-0">
       {/* Header — always visible */}
