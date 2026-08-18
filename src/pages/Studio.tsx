@@ -65,8 +65,6 @@ function StudioInner(): React.ReactNode {
   const [renameValue, setRenameValue] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-  const prevGeneratingRef = useRef(false);
-  const autoOpenedCodeRef = useRef(false);
   const [toast, setToast] = useState<string | null>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -94,19 +92,6 @@ function StudioInner(): React.ReactNode {
       document.removeEventListener("keydown", onKey);
     };
   }, [menuOpen]);
-
-  // Reveal the code drawer once, right after the first generation finishes,
-  // so users discover where their files went.
-  useEffect(() => {
-    const wasGenerating = prevGeneratingRef.current;
-    prevGeneratingRef.current = generation.isGenerating;
-    if (wasGenerating && !generation.isGenerating && !autoOpenedCodeRef.current) {
-      autoOpenedCodeRef.current = true;
-      if (Object.keys(useProjectStore.getState().files).length > 0) {
-        setShowCode(true);
-      }
-    }
-  }, [generation.isGenerating]);
 
   // Connect, activate session, and restore persisted files.
   useEffect(() => {
@@ -268,6 +253,11 @@ function StudioInner(): React.ReactNode {
             title={showCode ? "Hide code" : "Show code (files + editor)"}
           >
             {"</>"} Code
+            {hasFiles && (
+              <span className="ml-1 inline-flex items-center justify-center h-4 min-w-4 px-1 text-[10px] leading-none rounded-full bg-vs-border text-vs-muted">
+                {Object.keys(files).length}
+              </span>
+            )}
           </button>
 
           {/* Rewind */}
