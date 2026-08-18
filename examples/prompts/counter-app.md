@@ -5,9 +5,9 @@
 **Prompt:**
 
 ```
-Build the simplest possible React app: a counter.
+Build the simplest possible React app: a counter. - Show a big number and two buttons: +1 and −1 (Reset is optional)
 - One file only: src/App.tsx
-- Show a big number and two buttons: +1 and −1 (Reset is optional)
+
 - Use useState, plain inline styles — no Tailwind, no libraries, no backend
 - Keep the page clean and centred; cap the counter between −10 and 10
 - Nothing else. No routing, no storage, no tests

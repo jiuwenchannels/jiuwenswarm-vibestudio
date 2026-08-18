@@ -67,7 +67,7 @@ const NAV_SCRIPT = `<script>
     if (!el || el.nodeName !== "A") return;
     var href = el.getAttribute("href");
     if (!href) return;
-    if (/^(https?:|mailto:|tel:|javascript:|\/\/|data:)/i.test(href)) return;
+    if (/^[a-z][a-z0-9+.-]*:/i.test(href) || href.slice(0, 2) === "//") return;
 
     // Same-page anchor — scroll, don't let the iframe navigate to the parent URL.
     if (href.charAt(0) === "#") {
@@ -219,21 +219,30 @@ const PLACEHOLDER_FILES: Record<string, string> = {
 }`,
 };
 
-/** File paths treated as a valid entry point. */
-const ENTRY_CANDIDATES = [
+/**
+ * File paths treated as a valid entry point. Matched by path suffix so that
+ * projects nested under an arbitrary folder (e.g. "react-counter/src/main.jsx")
+ * are still detected.
+ */
+const ENTRY_SUFFIXES = [
   "/index.tsx", "/index.jsx", "/index.js",
   "/src/index.tsx", "/src/index.jsx", "/src/index.js",
   "/src/main.tsx", "/src/main.jsx", "/src/main.ts", "/src/main.js",
   "/main.tsx", "/main.jsx", "/main.ts", "/main.js",
 ];
 
-function hasEntry(files: Record<string, unknown>): boolean {
-  return ENTRY_CANDIDATES.some((p) => p in files);
+/** True when a path looks like an entry point (index.* / main.*), regardless of folder. */
+function isEntryPath(path: string): boolean {
+  return /(^|\/)(index|main)\.[tj]sx?$/.test(path);
 }
 
-function detectEntry(files: Record<string, unknown>): string {
-  for (const p of ENTRY_CANDIDATES) if (p in files) return p;
-  return "/index.tsx";
+function findEntry(files: Record<string, unknown>): string | null {
+  for (const suffix of ENTRY_SUFFIXES) {
+    for (const p of Object.keys(files)) {
+      if (p.endsWith(suffix)) return p;
+    }
+  }
+  return null;
 }
 
 const APP_CANDIDATES = [
@@ -243,7 +252,11 @@ const APP_CANDIDATES = [
 
 function findAppFile(files: Record<string, unknown>): string | null {
   for (const p of APP_CANDIDATES) if (p in files) return p;
-  return Object.keys(files).find((p) => /\.(tsx|jsx)$/.test(p)) ?? null;
+  return (
+    Object.keys(files).find(
+      (p) => /\.(tsx|jsx)$/.test(p) && !isEntryPath(p),
+    ) ?? null
+  );
 }
 
 function importSpecifier(appFile: string): string {
@@ -345,7 +358,15 @@ function buildSetup(projectFiles: Record<string, string>): {
 
   const htmlFile = findHtmlFile(code);
 
-  if (!htmlFile && !hasEntry(code)) {
+  // A project with TS/JSX sources needs esbuild bundling, even when it also
+  // ships an index.html (a Vite/React scaffold). Only treat it as a static site
+  // when the HTML has no bundler sources to compile.
+  const hasBundleSource = Object.keys(code).some(
+    (p) => /\.(tsx|jsx|ts)$/.test(p) && !p.endsWith(".d.ts"),
+  );
+  const isStatic = htmlFile !== null && !hasBundleSource;
+
+  if (!isStatic && findEntry(code) === null) {
     const appFile = findAppFile(code);
     if (appFile) {
       code["/index.tsx"] = `import React from "react";
@@ -360,12 +381,11 @@ createRoot(document.getElementById("root")!).render(<App />);`;
     }
   }
 
-  let staticHtml: string | undefined;
-  if (htmlFile) {
-    staticHtml = inlineHtml(htmlFile, code[htmlFile], code);
-  }
+  const staticHtml = isStatic
+    ? inlineHtml(htmlFile!, code[htmlFile!], code)
+    : undefined;
 
-  return { code, entry: htmlFile ?? detectEntry(code), staticHtml };
+  return { code, entry: isStatic ? htmlFile! : (findEntry(code) ?? "/index.tsx"), staticHtml };
 }
 
 // ---------------------------------------------------------------------------
