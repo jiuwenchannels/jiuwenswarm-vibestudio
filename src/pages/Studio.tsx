@@ -51,7 +51,7 @@ function StudioInner(): React.ReactNode {
   const { sessionId } = useParams<{ sessionId: string }>();
   const { setActive, activeProject, projects, renameProject } = useSessionStore();
   const {
-    generation, rewindStack, files, agentLog,
+    generation, rewindStack, files,
     loadFiles, loadMessages, popRewindSnapshot, restoreSnapshot,
   } = useProjectStore();
   const { isDark, toggle: toggleTheme } = useThemeStore();
@@ -160,18 +160,6 @@ function StudioInner(): React.ReactNode {
 
   const hasFiles = Object.keys(files).length > 0;
 
-  // Derive a friendly phase for the single generation status indicator.
-  const phase = (() => {
-    if (!generation.isGenerating) return null;
-    if (generation.activeAgent === "Awaiting your answer") return "Waiting for your answer…";
-    const anyTool = agentLog.some(
-      (e) => e.kind === "tool" || e.status.startsWith("Running tool"),
-    );
-    if (anyTool) return "Running tools…";
-    if (!hasFiles) return "Planning…";
-    return "Writing files…";
-  })();
-
   const mobileTabs: MobileTab[] = ["chat", "preview", "code"];
 
   const handleChatResize = (delta: number): void => {
@@ -234,14 +222,6 @@ function StudioInner(): React.ReactNode {
         </div>
 
         <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
-          {/* Generation status — single, human-friendly signal */}
-          {phase && (
-            <span className="hidden sm:flex items-center gap-1.5 text-xs text-brand-500 mr-1">
-              <span className="animate-spin w-3 h-3 border border-brand-500 border-t-transparent rounded-full" />
-              {phase}
-            </span>
-          )}
-
           {/* Code drawer toggle (explorer + editor) */}
           <button
             onClick={() => setShowCode((v) => !v)}

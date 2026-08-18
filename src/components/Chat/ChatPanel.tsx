@@ -40,6 +40,8 @@ export function ChatPanel(): React.ReactNode {
   const {
     messages,
     generation,
+    agentLog,
+    files,
     addChatMessage, updateLastAssistantMessage,
     applyDeltas, setGenerating, appendToken, clearStreamBuffer,
     pushRewindable, snapshotForRewind,
@@ -290,6 +292,18 @@ export function ChatPanel(): React.ReactNode {
     void runGeneration(prompt);
   }, [pendingPrompt, activeSessionId, runGeneration]);
 
+  // Friendly "what's happening" label for the chat, derived from the activity.
+  const phaseLabel = ((): string | null => {
+    if (!generation.isGenerating) return null;
+    if (generation.activeAgent === "Awaiting your answer") return "Waiting for your answer…";
+    const anyTool = agentLog.some(
+      (e) => e.kind === "tool" || e.status.startsWith("Running tool"),
+    );
+    if (anyTool) return "Running tools…";
+    if (Object.keys(files).length === 0) return "Planning…";
+    return "Writing files…";
+  })();
+
   return (
     <div className="flex flex-col h-full bg-vs-surface">
       {/* Connection indicator */}
@@ -343,6 +357,12 @@ export function ChatPanel(): React.ReactNode {
             <MessageBubble key={msg.id} message={msg} onAnswer={handleAnswer} onRetry={onRetry} />
           );
         })}
+        {phaseLabel && (
+          <div className="flex items-center gap-2 px-4 py-1 text-xs text-vs-muted">
+            <span className="animate-spin w-3 h-3 border border-brand-500 border-t-transparent rounded-full" />
+            {phaseLabel}
+          </div>
+        )}
         <div ref={bottomRef} />
       </div>
 

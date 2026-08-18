@@ -303,8 +303,7 @@ export function SandpackPreview({
   onEditorResize,
   hidePreview = false,
 }: Props): React.ReactNode {
-  const files        = useProjectStore((s) => s.files);
-  const isGenerating = useProjectStore((s) => s.generation.isGenerating);
+  const files = useProjectStore((s) => s.files);
 
   const hasFiles = Object.keys(files).length > 0;
 
@@ -315,14 +314,6 @@ export function SandpackPreview({
 
   return (
     <div className="relative h-full">
-      {/* First generation — block the placeholder while the app is built */}
-      {isGenerating && !hasFiles && (
-        <div className="absolute inset-0 z-10 bg-vs-bg/60 flex items-center justify-center gap-3 text-sm text-vs-text">
-          <span className="animate-spin w-4 h-4 border-2 border-brand-500 border-t-transparent rounded-full" />
-          Building your app…
-        </div>
-      )}
-
       {hidePreview ? (
         <MonacoEditorPanel />
       ) : (

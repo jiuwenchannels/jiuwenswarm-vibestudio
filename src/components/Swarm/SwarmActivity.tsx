@@ -74,10 +74,10 @@ export function SwarmActivity(): ReactNode {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const prevGenerating = useRef(generation.isGenerating);
 
-  // Auto-open when a generation starts; auto-collapse when it finishes.
+  // Collapse when a generation finishes so the chat returns to a clean state.
+  // (It no longer auto-opens — the header phase label is the single signal.)
   useEffect(() => {
-    if (generation.isGenerating && !prevGenerating.current) setOpen(true);
-    else if (!generation.isGenerating && prevGenerating.current) setOpen(false);
+    if (!generation.isGenerating && prevGenerating.current) setOpen(false);
     prevGenerating.current = generation.isGenerating;
   }, [generation.isGenerating]);
 
