@@ -184,20 +184,19 @@ function StudioInner(): React.ReactNode {
 
       {/* Top bar */}
       <header className="flex items-center justify-between px-4 py-2.5 border-b border-vs-border bg-vs-surface shrink-0 gap-3">
-        <div className="flex items-center gap-3 min-w-0">
+        <div className="flex items-center gap-2 min-w-0">
           <Link
             to="/"
-            className="shrink-0 group flex items-center gap-2"
+            className="shrink-0 flex items-center gap-1 text-xs text-vs-muted hover:text-vs-text transition-colors"
             title="Back to dashboard"
+            aria-label="Back to dashboard"
           >
-            <span className="w-7 h-7 rounded-lg bg-gradient-to-br from-brand-500 to-violet-500 flex items-center justify-center text-white text-xs font-bold shadow-sm shadow-brand-500/30">
-              V
-            </span>
-            <span className="hidden sm:block text-xs text-vs-muted group-hover:text-vs-text transition-colors">
-              Dashboard
-            </span>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="m15 18-6-6 6-6" />
+            </svg>
+            Dashboard
           </Link>
-          <span className="text-vs-faint shrink-0 select-none">/</span>
+          <span className="w-px h-4 bg-vs-border shrink-0" />
           {renaming ? (
             <input
               autoFocus
