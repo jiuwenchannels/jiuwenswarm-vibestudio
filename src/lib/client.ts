@@ -34,7 +34,7 @@ export type StreamEvent =
   | { kind: "done"; text?: string }
   | { kind: "error"; message: string };
 
-export type ClientEventName = "connected" | "disconnected" | "rewindable";
+export type ClientEventName = "connected" | "disconnected" | "rewindable" | "rewind_done";
 
 export interface Sessions {
   create: (title: string) => Promise<SessionInfo>;
@@ -48,6 +48,7 @@ interface EventPayloadMap {
   connected: string | undefined;
   disconnected: string | undefined;
   rewindable: string;
+  rewind_done: string;
 }
 
 interface PendingRequest {
@@ -566,6 +567,15 @@ export class RpcClient {
       this._dispatchStreamEvent("chat.final", msg);
       return;
     }
+    if (msg["type"] === "rewindable" && typeof msg["message_id"] === "string") {
+      this.emit("rewindable", msg["message_id"]);
+      return;
+    }
+    if (msg["type"] === "rewind_done") {
+      const mid = typeof msg["message_id"] === "string" ? msg["message_id"] : "";
+      this.emit("rewind_done", mid);
+      return;
+    }
 
     // Event frames.
     if (msg["type"] === "event" && typeof msg["event"] === "string") {
@@ -582,6 +592,18 @@ export class RpcClient {
         this._connectResolve = null;
         this._connectReject = null;
         this.emit("connected", sid);
+        return;
+      }
+
+      if (event === "rewindable") {
+        const mid = (payload["message_id"] ?? payload["messageId"]) as string | undefined;
+        if (mid) this.emit("rewindable", mid);
+        return;
+      }
+
+      if (event === "rewind_done") {
+        const mid = (payload["message_id"] ?? payload["messageId"]) as string | undefined;
+        this.emit("rewind_done", mid ?? "");
         return;
       }
 

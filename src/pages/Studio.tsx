@@ -49,7 +49,7 @@ const clamp = (value: number, min: number, max: number): number =>
 
 function StudioInner(): React.ReactNode {
   const { sessionId } = useParams<{ sessionId: string }>();
-  const { setActive, activeProject, projects } = useSessionStore();
+  const { setActive, activeProject, projects, renameProject } = useSessionStore();
   const {
     generation, rewindStack, files,
     loadFiles, loadMessages, popRewindSnapshot, restoreSnapshot,
@@ -61,6 +61,8 @@ function StudioInner(): React.ReactNode {
 
   const [showCode, setShowCode] = useState(false);
   const [mobileTab, setMobileTab] = useState<MobileTab>("chat");
+  const [renaming, setRenaming] = useState(false);
+  const [renameValue, setRenameValue] = useState("");
 
   // Connect, activate session, and restore persisted files.
   useEffect(() => {
@@ -92,15 +94,28 @@ function StudioInner(): React.ReactNode {
       const snapshot = popRewindSnapshot();
       if (snapshot !== null) restoreSnapshot(snapshot);
     };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (client as any).on("rewind_done", onRewindDone);
+    client.on("rewind_done", onRewindDone);
     return () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (client as any).off("rewind_done", onRewindDone);
+      client.off("rewind_done", onRewindDone);
     };
   }, [popRewindSnapshot, restoreSnapshot]);
 
   const project = activeProject() ?? projects.find((p) => p.sessionId === sessionId);
+
+  const startRename = (): void => {
+    setRenameValue(project?.title ?? "");
+    setRenaming(true);
+  };
+
+  const commitRename = (): void => {
+    setRenaming(false);
+    const title = renameValue.trim();
+    if (!title || !sessionId || title === project?.title) return;
+    renameProject(sessionId, title);
+    getClient()
+      .renameSession(sessionId, title)
+      .catch(() => {});
+  };
 
   const handleRewind = (): void => {
     const latest = rewindStack[rewindStack.length - 1];
@@ -144,9 +159,27 @@ function StudioInner(): React.ReactNode {
             </span>
           </Link>
           <span className="text-vs-faint shrink-0 select-none">/</span>
-          <span className="text-sm font-semibold text-vs-text truncate tracking-tight">
-            {project?.title ?? sessionId ?? "Loading…"}
-          </span>
+          {renaming ? (
+            <input
+              autoFocus
+              value={renameValue}
+              onChange={(e) => setRenameValue(e.target.value)}
+              onBlur={commitRename}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") commitRename();
+                if (e.key === "Escape") setRenaming(false);
+              }}
+              className="min-w-0 text-sm font-semibold bg-vs-raised border border-brand-500 rounded px-2 py-0.5 text-vs-text focus:outline-none"
+            />
+          ) : (
+            <button
+              onClick={startRename}
+              className="text-sm font-semibold text-vs-text truncate tracking-tight hover:text-brand-400 transition-colors"
+              title="Rename project"
+            >
+              {project?.title ?? sessionId ?? "Loading…"}
+            </button>
+          )}
         </div>
 
         <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
@@ -202,12 +235,12 @@ function StudioInner(): React.ReactNode {
             </button>
           )}
 
-          {/* Theme toggle */}
+          {/* Theme toggle — de-emphasized preference, separated from actions */}
+          <span className="w-px h-5 bg-vs-border shrink-0 mx-0.5" />
           <button
             onClick={toggleTheme}
-            className="px-2.5 py-1.5 rounded-lg text-xs border border-vs-border
-                       bg-vs-raised hover:bg-vs-border text-vs-muted hover:text-vs-text
-                       transition-colors"
+            className="px-2 py-1.5 rounded-lg text-sm text-vs-muted hover:text-vs-text
+                       hover:bg-vs-raised transition-colors"
             title={isDark ? "Switch to light mode" : "Switch to dark mode"}
           >
             {isDark ? "☀" : "☾"}

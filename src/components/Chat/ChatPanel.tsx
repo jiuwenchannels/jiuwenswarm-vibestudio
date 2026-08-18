@@ -23,17 +23,9 @@ import { useSessionStore } from "../../store/session";
 let _msgCounter = 0;
 const uid = (): string => `msg-${++_msgCounter}`;
 
-const QUICK_ACTIONS: { label: string; prefix: string }[] = [
-  { label: "Generate", prefix: "" },
-  { label: "Fix",      prefix: "Fix: " },
-  { label: "Explain",  prefix: "Explain: " },
-  { label: "Refactor", prefix: "Refactor: " },
-];
-
 export function ChatPanel(): React.ReactNode {
   const [input, setInput] = useState("");
   const [connected, setConnected] = useState(false);
-  const [activeAction, setActiveAction] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const autoSentRef = useRef(false);
@@ -275,14 +267,6 @@ export function ChatPanel(): React.ReactNode {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialPrompt, activeSessionId, connected]);
 
-  const applyQuickAction = (label: string, prefix: string): void => {
-    setInput((v) => {
-      const clean = v.replace(/^(Fix|Explain|Refactor): /i, "");
-      return prefix ? `${prefix}${clean}` : clean;
-    });
-    setActiveAction((cur) => (cur === label ? null : label));
-  };
-
   return (
     <div className="flex flex-col h-full bg-vs-surface">
       {/* Connection indicator */}
@@ -326,25 +310,6 @@ export function ChatPanel(): React.ReactNode {
 
       {/* Inline swarm activity — same window as the chat it belongs to */}
       <SwarmActivity />
-
-      {/* Quick-action pills */}
-      <div className="flex gap-1.5 px-4 pt-2.5 pb-1 shrink-0 flex-wrap">
-        {QUICK_ACTIONS.map(({ label, prefix }) => (
-          <button
-            key={label}
-            type="button"
-            onClick={() => applyQuickAction(label, prefix)}
-            disabled={!activeSessionId}
-            className={`text-[11px] px-2.5 py-1 rounded-full border transition-colors
-                        disabled:opacity-40 disabled:cursor-not-allowed
-                        ${activeAction === label
-                          ? "bg-brand-500/15 border-brand-500/40 text-brand-300"
-                          : "border-vs-border bg-vs-raised text-vs-muted hover:border-brand-500/40 hover:text-vs-text"}`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
 
       {/* Input */}
       <form
