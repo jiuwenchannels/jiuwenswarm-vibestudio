@@ -29,7 +29,7 @@ import { Resizer } from "../components/Resizer";
 import { ReconnectToast } from "../components/ReconnectToast";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 import { getClient, connectClient } from "../lib/client";
-import { downloadProjectZip, exportChatMarkdown } from "../lib/export";
+import { downloadProjectZip } from "../lib/export";
 import { useSessionStore } from "../store/session";
 import { useProjectStore } from "../store/project";
 import { useThemeStore } from "../store/theme";
@@ -51,9 +51,8 @@ function StudioInner(): React.ReactNode {
   const { sessionId } = useParams<{ sessionId: string }>();
   const { setActive, activeProject, projects } = useSessionStore();
   const {
-    generation, rewindStack, files, messages,
+    generation, rewindStack, files,
     loadFiles, loadMessages, popRewindSnapshot, restoreSnapshot,
-    clearChatMessages, clearAgentLog,
   } = useProjectStore();
   const { isDark, toggle: toggleTheme } = useThemeStore();
   const {
@@ -112,12 +111,7 @@ function StudioInner(): React.ReactNode {
     downloadProjectZip(files, project?.title ?? "project");
   };
 
-  const handleExportChat = (): void => {
-    exportChatMarkdown(messages, project?.title ?? "project");
-  };
-
   const hasFiles = Object.keys(files).length > 0;
-  const hasMessages = messages.some((m) => m.role !== "status");
 
   const mobileTabs: MobileTab[] = ["chat", "preview", "code"];
 
@@ -127,11 +121,6 @@ function StudioInner(): React.ReactNode {
 
   const handleCodeResize = (delta: number): void => {
     setCodeHeight(clamp(codeHeight + delta, CODE_HEIGHT_MIN, CODE_HEIGHT_MAX));
-  };
-
-  const handleClearChat = (): void => {
-    clearChatMessages();
-    clearAgentLog();
   };
 
   return (
@@ -199,38 +188,17 @@ function StudioInner(): React.ReactNode {
           {hasFiles && (
             <button
               onClick={handleDownload}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium
                          bg-vs-raised hover:bg-vs-border text-vs-muted hover:text-vs-text
                          transition-colors border border-vs-border hover:border-vs-border-light"
-              title="Download project as ZIP"
+              title="Download the project"
             >
-              ↓ ZIP
-            </button>
-          )}
-
-          {/* Export chat as Markdown */}
-          {hasMessages && (
-            <button
-              onClick={handleExportChat}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium
-                         bg-vs-raised hover:bg-vs-border text-vs-muted hover:text-vs-text
-                         transition-colors border border-vs-border hover:border-vs-border-light"
-              title="Export chat as Markdown"
-            >
-              ↓ Chat
-            </button>
-          )}
-
-          {/* Clear chat */}
-          {hasMessages && (
-            <button
-              onClick={handleClearChat}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium
-                         bg-vs-raised hover:bg-vs-border text-vs-muted hover:text-vs-text
-                         transition-colors border border-vs-border hover:border-vs-border-light"
-              title="Clear the conversation view"
-            >
-              ✕ Clear
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <path d="m7 10 5 5 5-5" />
+                <path d="M12 15V3" />
+              </svg>
+              Download
             </button>
           )}
 

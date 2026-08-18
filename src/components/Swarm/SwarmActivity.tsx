@@ -67,7 +67,7 @@ function classify(entry: AgentLogEntry): ParsedEntry {
 }
 
 export function SwarmActivity(): ReactNode {
-  const { agentLog, clearAgentLog, generation } = useProjectStore();
+  const { agentLog, generation } = useProjectStore();
   const [open, setOpen] = useState(false);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const prevGenerating = useRef(generation.isGenerating);
@@ -127,15 +127,6 @@ export function SwarmActivity(): ReactNode {
               {stepCount} steps
             </span>
           )}
-        </button>
-        <button
-          onClick={clearAgentLog}
-          disabled={stepCount === 0}
-          className="text-[11px] text-vs-faint hover:text-vs-muted transition-colors
-                     disabled:opacity-30 disabled:cursor-not-allowed"
-          title="Clear activity"
-        >
-          Clear
         </button>
       </div>
 
